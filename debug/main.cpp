@@ -2,7 +2,7 @@
 
 #include "..\include\tImage.h"
 
-#define IMG_PATH "F:\\SS\\9512.png"
+#define IMG_PATH "..\\..\\img.png"
 
 int main(void) {
 
