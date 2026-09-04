@@ -1,5 +1,7 @@
 #include "../../include/tool/transpose.h"
 
+#include <string.h>
+
 namespace tImage {
 
     // 汎用
@@ -11,13 +13,33 @@ namespace tImage {
     ) {
 
 
-        if (m == 1 && n == 1) {
+        if (m <= 32 && n <= 32) {
 
-            for (t_uint c = 0; c < src->channels(); ++c) {
-             
-                dst->data[bm_start * dst->stride() + bn_start * dst->channels() + c] =
-                    src->data[am_start * src->stride() + an_start * src->channels() + c];
+            auto pixel_bytes = src->depthByte() * src->channels();
 
+            for (t_uint y = 0; y < m; y++) {
+                for (t_uint x = 0; x < n; x++) {
+
+                    t_uint src_x = an_start + x;
+                    t_uint src_y = am_start + y;
+                    t_uint dst_x = bn_start + y;
+                    t_uint dst_y = bm_start + x;
+
+                    memcpy(
+                        &dst->data[dst_y * dst->stride() + dst_x * pixel_bytes],
+                        &src->data[src_y * src->stride() + src_x * pixel_bytes],
+                        pixel_bytes
+                    );
+
+                    /*
+                    for (t_uint c = 0; c < src->channels(); ++c) {
+                    
+                        dst->data[dst_y * dst->stride() + dst_x * dst->channels() + c] =
+                            src->data[src_y * src->stride() + src_x * src->channels() + c];
+
+                    }
+                    */
+                }
             }
 
             return;
