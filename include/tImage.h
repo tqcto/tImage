@@ -10,5 +10,6 @@
 #include "tool/converter.h"
 #include "tool/split.h"
 #include "tool/merge.h"
+#include "tool/transpose.h"
 
 #endif
