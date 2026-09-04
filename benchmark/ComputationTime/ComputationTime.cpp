@@ -6,9 +6,6 @@
 
 void naive_transpose(tImage::Image* src, tImage::Image* dst) {
 
-    dst->release();
-    dst->allocate(src->height(), src->width(), src->channels(), src->depth());
-
     for (tImage::t_uint y = 0; y < src->height(); y++) {
         for (tImage::t_uint x = 0; x < src->width(); x++) {
             for (tImage::t_uint c = 0; c < src->channels(); c++) {
@@ -43,7 +40,7 @@ int main() {
     const tImage::t_uint height = 4096;
 
     tImage::Image src(width, height, 3);
-    tImage::Image dst;
+    tImage::Image dst(height, width, 3);
 
     benchmark_transpose(&src, &dst);
 

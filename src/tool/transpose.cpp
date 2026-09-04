@@ -170,13 +170,9 @@ namespace tImage {
         const t_uint width = src->width();
         const t_uint height = src->height();
 
-        dst->release();
-        t_err err = dst->allocate(height, width, src->channels(), src->depth());
-        if (err != t_err_None) return err;
-
         REC_TRANSPOSE_any(src, dst, 0, 0, 0, 0, height, width);
 
-        return err;
+        return t_err_None;
 
     }
 

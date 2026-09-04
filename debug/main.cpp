@@ -9,7 +9,7 @@ int main(void) {
     tImage::Image src;
     tImage::decodePNG(&src, IMG_PATH);
 
-    tImage::Image dst;
+    tImage::Image dst(src.height(), src.width(), src.channels(), src.depth());
     tImage::transpose(&src, &dst);
 
     tImage::encodePNG(&dst, "test.png");
