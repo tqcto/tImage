@@ -13,6 +13,8 @@ namespace tImage {
     ) {
 
 
+        // 32x32ブロックならキャッシュに乗り，十分高速化可能な範囲に入る．
+        // ブロックをこれより小さくすると，再帰処理のオーバーヘッドが大きくなり，逆に遅くなる．
         if (m <= 32 && n <= 32) {
 
             auto pixel_bytes = src->depthByte() * src->channels();
@@ -25,6 +27,7 @@ namespace tImage {
                     t_uint dst_x = bn_start + y;
                     t_uint dst_y = bm_start + x;
 
+                    // 色のチャンネルに関しては，ループよりもメモリコピーの方が早い．
                     memcpy(
                         &dst->data[dst_y * dst->stride() + dst_x * pixel_bytes],
                         &src->data[src_y * src->stride() + src_x * pixel_bytes],
