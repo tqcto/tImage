@@ -2,7 +2,8 @@
 
 namespace tImage {
 
-    void REC_TRANSPOSE(
+    // 汎用
+    void REC_TRANSPOSE_any(
         const Image* src, Image* dst,
         t_uint am_start, t_uint an_start,
         t_uint bm_start, t_uint bn_start,
@@ -29,8 +30,8 @@ namespace tImage {
             const t_uint floor = n >> 1;
             const t_uint ceil = (n + 1) >> 1;
 
-            REC_TRANSPOSE(src, dst, am_start, an_start, bm_start, bn_start, m, floor);                  // (A_1, B_1)
-            REC_TRANSPOSE(src, dst, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil);   // (A_2, B_2)
+            REC_TRANSPOSE_any(src, dst, am_start, an_start, bm_start, bn_start, m, floor);                  // (A_1, B_1)
+            REC_TRANSPOSE_any(src, dst, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil);   // (A_2, B_2)
 
         }
         // このとき，行列srcを上下に，行列dstを左右に分割
@@ -39,8 +40,8 @@ namespace tImage {
             const t_uint floor = m >> 1;
             const t_uint ceil = (m + 1) >> 1;
 
-            REC_TRANSPOSE(src, dst, am_start, an_start, bm_start, bn_start, floor, n);                  // (A_1, B_1)
-            REC_TRANSPOSE(src, dst, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n);   // (A_2, B_2)
+            REC_TRANSPOSE_any(src, dst, am_start, an_start, bm_start, bn_start, floor, n);                  // (A_1, B_1)
+            REC_TRANSPOSE_any(src, dst, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n);   // (A_2, B_2)
 
         }
 
@@ -55,7 +56,7 @@ namespace tImage {
         t_err err = dst->allocate(height, width, src->channels(), src->depth());
         if (err != t_err_None) return err;
 
-        REC_TRANSPOSE(src, dst, 0, 0, 0, 0, height, width);
+        REC_TRANSPOSE_any(src, dst, 0, 0, 0, 0, height, width);
 
         return err;
 
