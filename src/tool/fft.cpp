@@ -61,7 +61,6 @@ namespace tImage {
         }
 
         // まずはdstをバッファとして使う．
-        #pragma omp parallel for
         for (t_int i = 0; i < N; i++) {
 
             t_uint r = reverseIndex(i, M);
@@ -88,6 +87,7 @@ namespace tImage {
 
             // メインのバタフライ演算全体
             for (t_int k = 0; k < N; k += step) {
+                #pragma omp simd
                 for (t_int j = step >> 1; j < step; j++) {
 
                     // バタフライの上側を示すインデックス
@@ -139,75 +139,98 @@ namespace tImage {
 
         }
 
-        // 正規化係数
-        t_float scale = 1.f / static_cast<t_float>(N);
-
         t_uint step = 1;
-        for (t_uint i = 0; i < M; i++) {
+        // 最後の一番最初のバタフライ以外
+        for (t_uint i = 0; i < M - 1; i++) {
 
             // 再帰ステップを2倍していく
             step <<= 1;
+            t_uint half_step = step >> 1;
 
             // あらかじめ必要な係数を計算
             //constexpr t_float PI2f = std::numbers::pi_v<t_float> * 2.0f;	// C++20
             constexpr t_float PI2f = M_PI * 2.0f;
             t_float tmp = PI2f / static_cast<float>(step);
-            for (t_int j = 0; j < step >> 1; j++) {
+            for (t_int j = 0; j < half_step; j++) {
                 t_float angle = tmp * static_cast<t_float>(j);
                 tmp_real[j] = std::cos(angle);
                 tmp_imag[j] = std::sin(angle);
             }
 
-            const t_bool is_last_stage = (i == M - 1);
-
             // メインのバタフライ演算全体
             for (t_int k = 0; k < N; k += step) {
-                for (t_int j = step >> 1; j < step; j++) {
+                #pragma omp simd
+                for (t_int j = half_step; j < step; j++) {
 
                     // バタフライの上側を示すインデックス
-                    t_int upBuff = k + j - (step >> 1);
+                    t_int upBuff = k + j - half_step;
                     // バタフライの下側を示すインデックス
                     t_int downBuff = k + j;
                     // かける係数を示すインデックス
-                    t_int Wbuff = j - (step >> 1);
+                    t_int Wbuff = j - half_step;
 
                     // バタフライ演算
                     t_float WXcosBuf = dst_real[downBuff] * tmp_real[Wbuff] + dst_imag[downBuff] * tmp_imag[Wbuff];
                     t_float WXsinBuf = dst_imag[downBuff] * tmp_real[Wbuff] - dst_real[downBuff] * tmp_imag[Wbuff];
 
                     // 演算結果を格納
-                    // 最後のステージなら正規化係数をかける
-                    // そうすれば，芋づる式にすべての係数も正規化される
-                    if (is_last_stage) {
-
-                        dst_real[downBuff]  = (dst_real[upBuff] - WXcosBuf) * scale;
-                        dst_imag[downBuff]  = (dst_imag[upBuff] - WXsinBuf) * scale;
-                        dst_real[upBuff]    = (dst_real[upBuff] + WXcosBuf) * scale;
-                        dst_imag[upBuff]    = (dst_imag[upBuff] + WXsinBuf) * scale;
-
-                    }
-                    else {
-
-                        dst_real[downBuff] = dst_real[upBuff] - WXcosBuf;
-                        dst_imag[downBuff] = dst_imag[upBuff] - WXsinBuf;
-                        dst_real[upBuff] += WXcosBuf;
-                        dst_imag[upBuff] += WXsinBuf;
-                    
-                    }
+                    dst_real[downBuff] = dst_real[upBuff] - WXcosBuf;
+                    dst_imag[downBuff] = dst_imag[upBuff] - WXsinBuf;
+                    dst_real[upBuff] += WXcosBuf;
+                    dst_imag[upBuff] += WXsinBuf;
 
                 }
             }
 
         }
 
-        /*
-        // 正規化係数
-        t_float scale = 1.f / static_cast<t_float>(N);
-        for (t_int i = 0; i < N; i++) {
-            dst_real[i] *= scale;
-            dst_imag[i] *= scale;
+        // 最初のバタフライだけ
+        if (M > 0) {
+
+            step = N;
+            t_uint half_step = step >> 1;
+
+            // あらかじめ必要な係数を計算
+            //constexpr t_float PI2f = std::numbers::pi_v<t_float> * 2.0f;	// C++20
+            constexpr t_float PI2f = M_PI * 2.0f;
+            t_float tmp = PI2f / static_cast<float>(step);
+            for (t_int j = 0; j < half_step; j++) {
+                t_float angle = tmp * static_cast<t_float>(j);
+                tmp_real[j] = std::cos(angle);
+                tmp_imag[j] = std::sin(angle);
+            }
+
+            // 正規化係数
+            t_float scale = 1.f / static_cast<t_float>(N);
+
+            // メインのバタフライ演算全体
+            for (t_int k = 0; k < N; k += step) {
+                #pragma omp simd
+                for (t_int j = half_step; j < step; j++) {
+
+                    // バタフライの上側を示すインデックス
+                    t_int upBuff = k + j - half_step;
+                    // バタフライの下側を示すインデックス
+                    t_int downBuff = k + j;
+                    // かける係数を示すインデックス
+                    t_int Wbuff = j - half_step;
+
+                    // バタフライ演算
+                    t_float WXcosBuf = dst_real[downBuff] * tmp_real[Wbuff] + dst_imag[downBuff] * tmp_imag[Wbuff];
+                    t_float WXsinBuf = dst_imag[downBuff] * tmp_real[Wbuff] - dst_real[downBuff] * tmp_imag[Wbuff];
+
+                    // 演算結果を格納
+                    // 正規化係数をかける
+                    // そうすれば，芋づる式にすべての係数も正規化される
+                    dst_real[downBuff]  = (dst_real[upBuff] - WXcosBuf) * scale;
+                    dst_imag[downBuff]  = (dst_imag[upBuff] - WXsinBuf) * scale;
+                    dst_real[upBuff]    = (dst_real[upBuff] + WXcosBuf) * scale;
+                    dst_imag[upBuff]    = (dst_imag[upBuff] + WXsinBuf) * scale;
+
+                }
+            }
+
         }
-        */
 
     }
 
