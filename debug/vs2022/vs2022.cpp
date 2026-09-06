@@ -62,6 +62,14 @@ void test_Fourier1d(void) {
 	}
 	#endif
 
+	/*
+	printf("start dft:\n");
+	fourier1d.dft();
+	printf("start idft:\n");
+	fourier1d.idft();
+	printf("end.\n");
+	*/
+
 	free(src_real);
 	free(src_imag);
 	free(dst_real);

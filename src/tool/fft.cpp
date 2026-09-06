@@ -233,6 +233,59 @@ namespace tImage {
 
     }
 
+    /*
+    void Fourier1d::dft(void) {
+        if (this->N == 0) return;
+
+        constexpr t_float PI2f = static_cast<t_float>(M_PI * 2.0);
+        const t_float angle_step = PI2f / static_cast<t_float>(this->N);
+
+        for (t_uint k = 0; k < this->N; k++) {
+            t_float sum_real = 0.0f;
+            t_float sum_imag = 0.0f;
+
+            for (t_uint n = 0; n < this->N; n++) {
+                t_float angle = angle_step * static_cast<t_float>(k * n);
+                t_float cos_val = std::cos(angle);
+                t_float sin_val = std::sin(angle);
+
+                // W = cos(angle) - i * sin(angle)
+                sum_real += this->src_real[n] * cos_val + this->src_imag[n] * sin_val;
+                sum_imag += this->src_imag[n] * cos_val - this->src_real[n] * sin_val;
+            }
+
+            this->dst_real[k] = sum_real;
+            this->dst_imag[k] = sum_imag;
+        }
+    }
+
+    void Fourier1d::idft(void) {
+        if (this->N == 0) return;
+
+        constexpr t_float PI2f = static_cast<t_float>(M_PI * 2.0);
+        const t_float angle_step = PI2f / static_cast<t_float>(this->N);
+        const t_float scale = 1.0f / static_cast<t_float>(this->N);
+
+        for (t_uint n = 0; n < this->N; n++) {
+            t_float sum_real = 0.0f;
+            t_float sum_imag = 0.0f;
+
+            for (t_uint k = 0; k < this->N; k++) {
+                t_float angle = angle_step * static_cast<t_float>(k * n);
+                t_float cos_val = std::cos(angle);
+                t_float sin_val = std::sin(angle);
+
+                // W = cos(angle) + i * sin(angle)
+                sum_real += this->dst_real[k] * cos_val - this->dst_imag[k] * sin_val;
+                sum_imag += this->dst_imag[k] * cos_val + this->dst_real[k] * sin_val;
+            }
+
+            this->src_real[n] = sum_real * scale;
+            this->src_imag[n] = sum_imag * scale;
+        }
+    }
+    */
+
     // 1次元FFT
     // Nは2の累乗である必要がある．そのためには，padding4fft()を持ちいる．
     // tmp1, tmp2はdstのサイズと一致させる．

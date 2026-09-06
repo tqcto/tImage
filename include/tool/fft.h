@@ -41,6 +41,12 @@ namespace tImage {
         DLL_EXPORT void fft(void);
         DLL_EXPORT void ifft(void);
 
+        // ベンチマーク用の全く最適化していない離散フーリエ変換
+        /*
+        DLL_EXPORT void dft(void);
+        DLL_EXPORT void idft(void);
+        */
+
     };
 
     // 1次元FFT
