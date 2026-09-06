@@ -139,6 +139,9 @@ namespace tImage {
 
         }
 
+        // 正規化係数
+        t_float scale = 1.f / static_cast<t_float>(N);
+
         t_uint step = 1;
         for (t_uint i = 0; i < M; i++) {
 
@@ -154,6 +157,8 @@ namespace tImage {
                 tmp_real[j] = std::cos(angle);
                 tmp_imag[j] = std::sin(angle);
             }
+
+            const t_bool is_last_stage = (i == M - 1);
 
             // メインのバタフライ演算全体
             for (t_int k = 0; k < N; k += step) {
@@ -171,22 +176,38 @@ namespace tImage {
                     t_float WXsinBuf = dst_imag[downBuff] * tmp_real[Wbuff] - dst_real[downBuff] * tmp_imag[Wbuff];
 
                     // 演算結果を格納
-                    dst_real[downBuff] = dst_real[upBuff] - WXcosBuf;
-                    dst_imag[downBuff] = dst_imag[upBuff] - WXsinBuf;
-                    dst_real[upBuff] += WXcosBuf;
-                    dst_imag[upBuff] += WXsinBuf;
+                    // 最後のステージなら正規化係数をかける
+                    // そうすれば，芋づる式にすべての係数も正規化される
+                    if (is_last_stage) {
+
+                        dst_real[downBuff]  = (dst_real[upBuff] - WXcosBuf) * scale;
+                        dst_imag[downBuff]  = (dst_imag[upBuff] - WXsinBuf) * scale;
+                        dst_real[upBuff]    = (dst_real[upBuff] + WXcosBuf) * scale;
+                        dst_imag[upBuff]    = (dst_imag[upBuff] + WXsinBuf) * scale;
+
+                    }
+                    else {
+
+                        dst_real[downBuff] = dst_real[upBuff] - WXcosBuf;
+                        dst_imag[downBuff] = dst_imag[upBuff] - WXsinBuf;
+                        dst_real[upBuff] += WXcosBuf;
+                        dst_imag[upBuff] += WXsinBuf;
+                    
+                    }
 
                 }
             }
 
         }
 
+        /*
         // 正規化係数
         t_float scale = 1.f / static_cast<t_float>(N);
         for (t_int i = 0; i < N; i++) {
             dst_real[i] *= scale;
             dst_imag[i] *= scale;
         }
+        */
 
     }
 
