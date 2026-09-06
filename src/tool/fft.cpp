@@ -23,14 +23,6 @@ namespace tImage {
 
     }
 
-    t_uint padding4fft(t_uint n) {
-
-        //t_uint ceilN = std::bit_ceil(n); // C++20
-        t_uint floorN = bit_floor(n);
-        return floorN << (n != floorN);
-
-    }
-
     // iは普通のインデックスで、mはビット数
     inline t_int reverseIndex(t_int index, t_int m) {
 
@@ -42,6 +34,202 @@ namespace tImage {
         }
         
         return t;
+
+    }
+
+    t_uint calc_paddinhg(t_uint n) {
+
+        //t_uint ceilN = std::bit_ceil(n); // C++20
+        t_uint floorN = bit_floor(n);
+        return floorN << (n != floorN);
+
+    }
+
+    Fourier1d::Fourier1d(
+        t_uint _N,
+        t_float* _src_real, t_float* _src_imag,
+        t_float* _dst_real, t_float* _dst_imag,
+        t_float* buffer
+    ) {
+
+        this->N = _N;
+        this->src_real = _src_real;
+        this->src_imag = _src_imag;
+        this->dst_real = _dst_real;
+        this->dst_imag = _dst_imag;
+
+        this->tmp_real = buffer;
+        this->tmp_imag = buffer + (_N >> 1);
+
+    }
+
+    t_err Fourier1d::PreCalc(void) {
+
+        const t_uint halfN = N >> 1;
+        constexpr t_float PI2f = static_cast<t_float>(M_PI * 2.0);
+        const t_float angle_step = PI2f / static_cast<t_float>(N);
+
+        for (t_uint j = 0; j < halfN; j++) {
+
+            t_float angle = angle_step * static_cast<t_float>(j);
+            tmp_real[j] = std::cos(angle);
+            tmp_imag[j] = std::sin(angle);
+
+        }
+
+        return t_err_None;
+
+    }
+
+    void Fourier1d::fft(void) {
+
+        // バタフライ演算の階層数(=log2(N))
+        // t_uint M = std::bit_width(N) - 1; // C++20
+        t_uint M = 0;
+        while ( (1u << M) < this->N ) {
+            M++;
+        }
+
+        // まずはdstをバッファとして使う．
+        for (t_int i = 0; i < this->N; i++) {
+
+            t_uint r = reverseIndex(i, M);
+            this->dst_real[i] = this->src_real[r];
+            this->dst_imag[i] = this->src_imag[r];
+
+        }
+
+        t_uint step = 1;
+        for (t_uint i = 0; i < M; i++) {
+
+            // 再帰ステップを2倍していく
+            step <<= 1;
+
+            t_int N_step = N / step;
+
+            // メインのバタフライ演算全体
+            for (t_int k = 0; k < N; k += step) {
+                #pragma omp simd
+                for (t_int j = step >> 1; j < step; j++) {
+
+                    // バタフライの上側を示すインデックス
+                    t_int upBuff = k + j - (step >> 1);
+                    // バタフライの下側を示すインデックス
+                    t_int downBuff = k + j;
+                    // かける係数を示すインデックス
+                    t_int Wbuff = (j - (step >> 1)) * N_step;
+
+                    // バタフライ演算
+                    t_float WXcosBuf = this->dst_real[downBuff] * this->tmp_real[Wbuff] - this->dst_imag[downBuff] * this->tmp_imag[Wbuff];
+                    t_float WXsinBuf = this->dst_real[downBuff] * this->tmp_imag[Wbuff] + this->dst_imag[downBuff] * this->tmp_real[Wbuff];
+
+                    // 演算結果を格納
+                    this->dst_real[downBuff] = this->dst_real[upBuff] - WXcosBuf;
+                    this->dst_imag[downBuff] = this->dst_imag[upBuff] - WXsinBuf;
+                    this->dst_real[upBuff] += WXcosBuf;
+                    this->dst_imag[upBuff] += WXsinBuf;
+
+                }
+            }
+
+        }
+
+    }
+
+    void Fourier1d::ifft(void) {
+
+        // バタフライ演算の階層数(=log2(N))
+        // t_uint M = std::bit_width(N) - 1; // C++20
+        t_uint M = 0;
+        while ( (1u << M) < this->N ) {
+            M++;
+        }
+
+        // まずはdstをバッファとして使う．
+        for (t_int i = 0; i < this->N; i++) {
+
+            t_uint r = reverseIndex(i, M);
+            this->src_real[r] = this->dst_real[i];
+            this->src_imag[r] = this->dst_imag[i];
+
+        }
+
+        t_uint step = 1;
+        // 最後の一番最初のバタフライ以外
+        for (t_uint i = 0; i < M - 1; i++) {
+
+            // 再帰ステップを2倍していく
+            step <<= 1;
+            t_uint half_step = step >> 1;
+
+            const t_int N_step = N / step;
+
+            // メインのバタフライ演算全体
+            for (t_int k = 0; k < this->N; k += step) {
+                #pragma omp simd
+                for (t_int j = half_step; j < step; j++) {
+
+                    // バタフライの上側を示すインデックス
+                    t_int upBuff = k + j - half_step;
+                    // バタフライの下側を示すインデックス
+                    t_int downBuff = k + j;
+                    // かける係数を示すインデックス
+                    t_int Wbuff = (j - half_step) * N_step;
+
+                    // バタフライ演算
+                    t_float WXcosBuf = this->src_real[downBuff] * this->tmp_real[Wbuff] + this->src_imag[downBuff] * this->tmp_imag[Wbuff];
+                    t_float WXsinBuf = this->src_imag[downBuff] * this->tmp_real[Wbuff] - this->src_real[downBuff] * this->tmp_imag[Wbuff];
+
+                    // 演算結果を格納
+                    this->src_real[downBuff] = this->src_real[upBuff] - WXcosBuf;
+                    this->src_imag[downBuff] = this->src_imag[upBuff] - WXsinBuf;
+                    this->src_real[upBuff] += WXcosBuf;
+                    this->src_imag[upBuff] += WXsinBuf;
+
+                }
+            }
+
+        }
+
+        // 最初のバタフライだけ
+        if (M > 0) {
+
+            step = this->N;
+            t_uint half_step = step >> 1;
+
+            // 正規化係数
+            t_float scale = 1.f / static_cast<t_float>(N);
+
+            const t_int N_step = N / step;
+
+            // メインのバタフライ演算全体
+            for (t_int k = 0; k < this->N; k += step) {
+                #pragma omp simd
+                for (t_int j = half_step; j < step; j++) {
+
+                    // バタフライの上側を示すインデックス
+                    t_int upBuff = k + j - half_step;
+                    // バタフライの下側を示すインデックス
+                    t_int downBuff = k + j;
+                    // かける係数を示すインデックス
+                    t_int Wbuff = (j - half_step) * N_step;
+
+                    // バタフライ演算
+                    t_float WXcosBuf = this->src_real[downBuff] * this->tmp_real[Wbuff] + this->src_imag[downBuff] * this->tmp_imag[Wbuff];
+                    t_float WXsinBuf = this->src_imag[downBuff] * this->tmp_real[Wbuff] - this->src_real[downBuff] * this->tmp_imag[Wbuff];
+
+                    // 演算結果を格納
+                    // 正規化係数をかける
+                    // そうすれば，芋づる式にすべての係数も正規化される
+                    this->src_real[downBuff]  = (this->src_real[upBuff] - WXcosBuf) * scale;
+                    this->src_imag[downBuff]  = (this->src_imag[upBuff] - WXsinBuf) * scale;
+                    this->src_real[upBuff]    = (this->src_real[upBuff] + WXcosBuf) * scale;
+                    this->src_imag[upBuff]    = (this->src_imag[upBuff] + WXsinBuf) * scale;
+
+                }
+            }
+
+        }
 
     }
 

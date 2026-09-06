@@ -17,11 +17,64 @@ using namespace tImage;
 #define PRE_LOG
 #endif
 
+void test_Fourier1d(void) {
+
+	//const t_uint N = 1920 * 1080 * 3;
+	const t_uint N = 1920 * 3;
+	//const t_uint N = 10;
+	t_uint paddedN = calc_paddinhg(N);
+	
+	printf("source data:\n");
+	t_float* src_real = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_float* src_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
+	for (t_uint i = 0; i < paddedN; i++){
+		src_real[i] = (t_float)i + 1.f;
+		src_imag[i] = 0.f;
+		PRE_LOG("[%u] : %f\n", i, src_real[i]);
+	}
+	
+	// paddedNに合わせて出力メモリを確保
+	t_float* dst_real = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_float* dst_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
+	// 一時メモリも確保
+	t_float* buffer = (t_float*)malloc(sizeof(t_float) * paddedN);
+
+	Fourier1d fourier1d(paddedN, src_real, src_imag, dst_real, dst_imag, buffer);
+	fourier1d.PreCalc();
+
+	printf("start fft.\n");
+	fourier1d.fft();
+
+	printf("dest data:\n");
+	#ifdef _PRE
+	for (t_uint i = 0; i < paddedN; i++){
+		PRE_LOG("[%u] : %f + %fi\n", i, dst_real[i], dst_imag[i]);
+	}
+	#endif
+
+	printf("start ifft.\n");
+	fourier1d.ifft();
+
+	printf("source data:\n");
+	#ifdef _PRE
+	for (t_uint i = 0; i < paddedN; i++){
+		PRE_LOG("[%u] : %f + %fi\n", i, src_real[i], src_imag[i]);
+	}
+	#endif
+
+	free(src_real);
+	free(src_imag);
+	free(dst_real);
+	free(dst_imag);
+	free(buffer);
+
+}
+
 void test_fft(void) {
 
 	//const t_uint N = 1920 * 1080 * 3;
 	const t_uint N = 1920 * 3;
-	t_uint paddedN = padding4fft(N);
+	t_uint paddedN = calc_paddinhg(N);
 	
 	printf("source data:\n");
 	t_float* src_real = (t_float*)malloc(sizeof(t_float) * paddedN);
@@ -32,14 +85,14 @@ void test_fft(void) {
 		PRE_LOG("[%u] : %f\n", i, src_real[i]);
 	}
 
-	printf("start fft.\n");
-
 	// paddedNに合わせて出力メモリを確保
 	t_float* dst_real = (t_float*)malloc(sizeof(t_float) * paddedN);
 	t_float* dst_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
 	// 一時メモリも確保
 	t_float* tmp_real = (t_float*)malloc(sizeof(t_float) * paddedN);
 	t_float* tmp_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
+
+	printf("start fft.\n");
 
 	fft1d(src_real, src_imag, dst_real, dst_imag, tmp_real, tmp_imag, paddedN);
 
@@ -81,7 +134,8 @@ void test_fft(void) {
 
 int main(void) {
 
-	test_fft();
+	//test_fft();
+	test_Fourier1d();
 	
     Image src;
     decodePNG(&src, IMG_PATH);
