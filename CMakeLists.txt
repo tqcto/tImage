@@ -47,6 +47,7 @@ set(TIMAGE_SOURCES
     src/tool/merge.cpp
     src/tool/split.cpp
     src/tool/transpose.cpp
+    src/tool/fft.cpp
 )
 
 add_library(tImage ${TIMAGE_SOURCES})
