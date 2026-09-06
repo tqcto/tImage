@@ -11,5 +11,6 @@
 #include "tool/split.h"
 #include "tool/merge.h"
 #include "tool/transpose.h"
+#include "tool/fft.h"
 
 #endif
