@@ -1,6 +1,8 @@
 #pragma once
 #include "../tImage_definition.h"
 
+#include <stdlib.h>
+
 namespace tImage {
 
     template <typename T>
