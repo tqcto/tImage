@@ -9,7 +9,7 @@
 
 using namespace tImage;
 
-//#define _PRE
+#define _PRE
 
 #ifdef _PRE
 #define PRE_LOG	printf
@@ -20,8 +20,8 @@ using namespace tImage;
 void test_Fourier1d(void) {
 
 	//const t_uint N = 1920 * 1080 * 3;
-	const t_uint N = 1920 * 3;
-	//const t_uint N = 10;
+	//const t_uint N = 1920 * 3;
+	const t_uint N = 10;
 	t_uint paddedN = calc_paddinhg(N);
 	
 	printf("source data:\n");

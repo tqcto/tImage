@@ -1,4 +1,5 @@
 #include "../../include/tool/fft.h"
+#include "../../include/tool/transpose.h"
 
 //#include <bit>		// C++20
 //#include <numbers>	// C++20
@@ -285,6 +286,105 @@ namespace tImage {
         }
     }
     */
+
+    void Fourier2d::PreCalc(void) {
+
+        // 行方向用のFFT
+        Fourier1d pre1(this->cols_length, nullptr, nullptr, nullptr, nullptr, this->buffer4cols);
+        pre1.PreCalc();
+
+        // 列方向用のFFT
+        Fourier1d pre2(this->rows_length, nullptr, nullptr, nullptr, nullptr, this->buffer4rows);
+        pre2.PreCalc();
+
+    }
+
+    Fourier2d::Fourier2d(
+        Matrix<t_float>* _src_real, Matrix<t_float>* _src_imag,
+        Matrix<t_float>* _dst_real, Matrix<t_float>* _dst_imag,
+        Matrix<t_float>* _trans1_real, Matrix<t_float>* _trans1_imag,
+        Matrix<t_float>* _trans2_real, Matrix<t_float>* _trans2_imag,
+        t_float* reserved1, t_float* reserved2
+    ) {
+
+        this->src_real = _src_real;
+        this->src_imag = _src_imag;
+        this->dst_real = _dst_real;
+        this->dst_imag = _dst_imag;
+
+        this->trans1_real = _trans1_real;
+        this->trans1_imag = _trans1_imag;
+        this->trans2_real = _trans2_real;
+        this->trans2_imag = _trans2_imag;
+
+        this->cols_length = this->src_real->stride() / sizeof(t_float);
+        this->rows_length = this->trans1_real->stride() / sizeof(t_float);
+
+        this->buffer4cols = reserved1;
+        this->buffer4rows = reserved2;
+
+        this->PreCalc();
+
+    }
+
+    Fourier2d::~Fourier2d() {
+
+
+
+    }
+
+    void Fourier2d::fft(void) {
+
+        t_uint w = this->src_real->cols();
+        t_uint h = this->src_real->rows();
+        t_uint64 stride = this->src_real->stride();
+
+        #pragma omp parallel default(none) \
+                shared(h, w, stride, src_real, src_imag, dst_real, dst_imag)
+        {
+            
+            // preで計算済みなのでlocal_fft.PreCalc()の計算は不要
+            Fourier1d local_fft(this->cols_length, nullptr, nullptr, nullptr, nullptr, this->buffer4cols);
+
+            #pragma omp for schedule(static)
+            for (t_int i = 0; i < h; i++) {
+                t_uint64 ptr = stride * i;
+                local_fft.src_real = this->src_real->data + ptr;
+                local_fft.src_imag = this->src_imag->data + ptr;
+                local_fft.dst_real = this->dst_real->data + ptr;
+                local_fft.dst_imag = this->dst_imag->data + ptr;
+                local_fft.fft();
+            }
+        }
+
+        transpose(dst_real, dst_imag, trans1_real, trans1_imag);
+        stride = this->trans1_real->stride();
+        
+        #pragma omp parallel default(none) \
+                shared(h, w, stride, trans1_real, trans1_imag, trans2_real, trans2_imag)
+        {
+            
+            // preで計算済みなのでlocal_fft.PreCalc()の計算は不要
+            Fourier1d local_fft(this->rows_length, nullptr, nullptr, nullptr, nullptr, this->buffer4rows);
+
+            #pragma omp for schedule(static)
+            for (t_int i = 0; i < w; i++) {
+
+                t_uint64 ptr = stride * i;
+                
+                local_fft.src_real = this->trans1_real->data + ptr;
+                local_fft.src_imag = this->trans1_imag->data + ptr;
+                local_fft.dst_real = this->trans2_real->data + ptr;
+                local_fft.dst_imag = this->trans2_imag->data + ptr;
+
+                local_fft.fft();
+            
+            }
+        }
+
+        transpose(trans2_real, trans2_imag, dst_real, dst_imag);
+
+    }
 
     // 1次元FFT
     // Nは2の累乗である必要がある．そのためには，padding4fft()を持ちいる．

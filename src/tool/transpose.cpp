@@ -117,6 +117,54 @@ namespace tImage {
 
     }
 
+    // 複素行列
+    void REC_TRANSPOSE_complex(
+        const Matrix<t_float>* src_real, const Matrix<t_float>* src_imag,
+        Matrix<t_float>* dst_real, Matrix<t_float>* dst_imag,
+        t_uint am_start, t_uint an_start,
+        t_uint bm_start, t_uint bn_start,
+        t_uint m, t_uint n
+    ) {
+
+
+        // **************************************************************************** //
+        // ここをSIMD化したい
+        // 具体的には，1x1ピクセルになるよりも手前の，3x3ピクセルなどの時点でSIMD化
+        if (m == 1 && n == 1) {
+
+            dst_real->data[bm_start * dst_real->stride() + bn_start] =
+                    src_real->data[am_start * src_real->stride() + an_start];
+            dst_imag->data[bm_start * dst_imag->stride() + bn_start] =
+                    src_imag->data[am_start * src_imag->stride() + an_start];
+
+            return;
+
+        }
+        // **************************************************************************** //
+
+        // このとき，行列srcを左右に，行列dstを上下に分割
+        if (n >= m) {
+
+            const t_uint floor = n >> 1;
+            const t_uint ceil = (n + 1) >> 1;
+
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, m, floor);                // (A_1, B_1)
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil); // (A_2, B_2)
+
+        }
+        // このとき，行列srcを上下に，行列dstを左右に分割
+        else {
+
+            const t_uint floor = m >> 1;
+            const t_uint ceil = (m + 1) >> 1;
+
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, floor, n);                  // (A_1, B_1)
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n);   // (A_2, B_2)
+
+        }
+
+    }
+
     // 1チャンネル
     void REC_TRANSPOSE_4ch(
         const Image* src, Image* dst,
@@ -171,6 +219,17 @@ namespace tImage {
         const t_uint height = src->height();
 
         REC_TRANSPOSE_any(src, dst, 0, 0, 0, 0, height, width);
+
+        return t_err_None;
+
+    }
+
+    t_err transpose(Matrix<t_float>* src_real, Matrix<t_float>* src_imag, Matrix<t_float>* dst_real, Matrix<t_float>* dst_imag) {
+
+        const t_uint cols = src_real->cols();
+        const t_uint rows = src_real->rows();
+
+        REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, 0, 0, 0, 0, rows, cols);
 
         return t_err_None;
 
