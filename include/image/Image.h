@@ -1,5 +1,6 @@
 #pragma once
 #include "../tImage_definition.h"
+#include "Matrix.h"
 
 namespace tImage {
 
@@ -54,50 +55,49 @@ namespace tImage {
 		t_uint bytes_per_pixel;		// if packed is true, then use this.
 	}PixelFormat;
 
-	class Image {
+	class Image : public Matrix<t_uchar> {
 
 	private:
 
-		t_uint _align = T_IMAGE_DEFAULT_ALIGN;	// 32byte align
-
-		t_uint _width = 0;
-		t_uint _height = 0;
-		t_uint64 _stride = 0;		// length of a row
+		// cols: t_uint _width = 0;
+		// rows: t_uint _height = 0;
+		
 		//t_uint _channels = 8;
 		//t_uint _depth = 8;		// Color depth. usually 8.
 		PixelFormat format;		// pixel format
 		//t_colorType _colorType = t_colorType_RGB;
 
-		// Is memory from external
-		t_bool _external_memory = false;
-
 		t_err _allocate_memory();
 
+		/*
 		void bilinear() {
 
 
 
 		}
+		*/
 
 	public:
 
 		// image data
-		t_uchar* data = nullptr;
+		// t_uchar* data = nullptr;
 
 		// initialize class
 
 		/* Initialize empty class */
 		DLL_EXPORT Image(void);
+		/* Delete */
+		Image(t_uint cols, t_uint rows) = delete;
 		/* Initialize class from allocate function */
 		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels);
 		/* Initialize class from allocate function */
 		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, t_uint depth);
 		//DLL_EXPORT Image(t_uint width, t_uint height, t_uint channles, BitsPerChannel unpacked_format);
 
-		DLL_EXPORT ~Image();
+		// DLL_EXPORT ~Image();
 
 		/* Set align. Only powers of 2 can be specified. */
-		DLL_EXPORT t_err setAlign(t_uint align);
+		// DLL_EXPORT t_err setAlign(t_uint align);
 
 		/* Input image of other memory*/
 		DLL_EXPORT t_err input(
@@ -106,6 +106,8 @@ namespace tImage {
 			t_uint channels, t_uint depth,
 			t_uint align
 		);
+
+		t_err allocate(t_uint cols, t_uint rows) = delete;
 
 		/* Allocate memory of image */
 		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels);
@@ -118,12 +120,16 @@ namespace tImage {
 		/* Get whether class is empty. If empty then returned true. */
 		DLL_EXPORT t_bool empty() const noexcept;
 
+		/* Delete */
+		t_uint cols() const noexcept = delete;
+		t_uint rows() const noexcept = delete;
+
 		/* Get width of image */
 		DLL_EXPORT t_uint width() const noexcept;
 		/* Get height of image */
 		DLL_EXPORT t_uint height() const noexcept;
 		/* Get stride of image */
-		DLL_EXPORT t_uint64 stride() const noexcept;
+		// DLL_EXPORT t_uint64 stride() const noexcept;
 		/* Get channels of image */
 		DLL_EXPORT t_uint channels() const noexcept;
 		/* Get bit depth of image */

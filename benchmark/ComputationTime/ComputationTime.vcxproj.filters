@@ -3,4 +3,7 @@
   <ItemGroup>
     <ClCompile Include="ComputationTime.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="measure.h" />
+  </ItemGroup>
 </Project>

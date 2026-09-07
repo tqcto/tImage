@@ -10,10 +10,10 @@ namespace tImage {
 	t_err Image::_allocate_memory() {
 
 		// calc stride
-		this->_stride = calcStride(this->_width, this->format.channels, this->depth(), this->_align);
+		this->_stride = calcStride(this->_cols, this->format.channels, this->depth(), this->_align);
 
 		// total bytes
-		t_uint64 total_bytes = this->_stride * (t_uint64)this->_height;
+		t_uint64 total_bytes = this->_stride * (t_uint64)this->_rows;
 
 		this->data = (t_uchar*)malloc(total_bytes);
 
@@ -85,6 +85,7 @@ namespace tImage {
 	}
 	*/
 
+	/*
 	Image::~Image() {
 
 		if (this->data) {
@@ -92,7 +93,9 @@ namespace tImage {
 		}
 
 	}
+	*/
 
+	/*
 	t_err Image::setAlign(t_uint align) {
 
 		// 2�ׂ̂��悩����
@@ -102,6 +105,7 @@ namespace tImage {
 		return t_err_None;
 
 	}
+	*/
 
 	t_err Image::input(
 		t_uchar* src,
@@ -117,8 +121,8 @@ namespace tImage {
 
 		err = !width || !height || !channels ? t_err_InvalidArgument : t_err_None;
 
-		this->_width = width;
-		this->_height = height;
+		this->_cols = width;
+		this->_rows = height;
 
 		this->format.channels = channels;
 		this->format.bytes_per_pixel = (depth >> 3) * channels;	// usually 8bit (=1byte)
@@ -139,8 +143,8 @@ namespace tImage {
 
 		if (!width || !height || !channels) return t_err_InvalidArgument;
 
-		this->_width = width;
-		this->_height = height;
+		this->_cols = width;
+		this->_rows = height;
 
 		this->format.channels = channels;
 		//this->format.packed = true;
@@ -155,8 +159,8 @@ namespace tImage {
 
 		if (!width || !height || !channels || !depth) return t_err_InvalidArgument;
 
-		this->_width = width;
-		this->_height = height;
+		this->_cols = width;
+		this->_rows = height;
 
 		this->format.channels = channels;
 		this->format.bytes_per_pixel = (depth >> 3) * channels;	// usually 8bit (=1byte)
@@ -182,8 +186,8 @@ namespace tImage {
 
 		this->_align = T_IMAGE_DEFAULT_ALIGN;
 
-		this->_width = 0;
-		this->_height = 0;
+		this->_cols = 0;
+		this->_rows = 0;
 		this->_stride = 0;
 		this->format.bytes_per_pixel = 0;
 		this->format.channels = 0;
@@ -192,25 +196,27 @@ namespace tImage {
 
 	t_bool Image::empty() const noexcept {
 
-		return !(this->data != nullptr | this->_width | this->_height | this->format.channels);
+		return !(this->data != nullptr | this->_cols | this->_rows | this->format.channels);
 
 	}
 
 	t_uint Image::width() const noexcept {
 
-		return this->_width;
+		return this->_cols;
 
 	}
 	t_uint Image::height() const noexcept {
 
-		return this->_height;
+		return this->_rows;
 
 	}
+	/*
 	t_uint64 Image::stride() const noexcept {
 
 		return this->_stride;
 
 	}
+	*/
 	t_uint Image::channels() const noexcept {
 
 		return this->format.channels;
@@ -248,7 +254,7 @@ namespace tImage {
 		// only handle 8bit per channel here
 		if (this->depthByte() != 1) {
 			// fallback: simple byte-swap scalar
-			t_uint64 pixels = (t_uint64)this->_width * this->_height;
+			t_uint64 pixels = (t_uint64)this->_cols * this->_rows;
 			t_uchar* p = this->data;
 			for (t_uint64 i = 0; i < pixels; ++i) {
 				t_uchar r = p[3*i + 0];
@@ -258,7 +264,7 @@ namespace tImage {
 			return t_err_None;
 		}
 
-		const t_uint64 pixels = (t_uint64)this->_width * this->_height;
+		const t_uint64 pixels = (t_uint64)this->_cols * this->_rows;
 		t_uchar* src = this->data;
 
 		// temporary 32-bit buffer (one uint32 per pixel: low 3 bytes used)
@@ -318,7 +324,7 @@ namespace tImage {
 		const __m256i m_b    = _mm256_set1_epi32(0x00FF0000u);
 
 		t_uint64 i = 0;
-		for (; i + 8 <= this->stride() * this->_height; i += 8) {
+		for (; i + 8 <= this->stride() * this->_rows; i += 8) {
 
 			__m256i v = _mm256_loadu_si256((const __m256i*)(this->data + i * 4));
 			__m256i vr = _mm256_and_si256(v, m_r);
@@ -338,8 +344,8 @@ namespace tImage {
 
 		return (
 			this->data == img.data &&
-			this->_width == img.width() &&
-			this->_height == img.height() &&
+			this->_cols == img.width() &&
+			this->_rows == img.height() &&
 			this->format.channels == img.channels() &&
 			this->depth() == img.depth() &&
 			this->_stride == img.stride()
