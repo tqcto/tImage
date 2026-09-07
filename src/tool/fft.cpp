@@ -45,57 +45,77 @@ namespace tImage {
 
     }
 
-    Fourier1d::Fourier1d(
-        t_uint _N,
-        t_float* _src_real, t_float* _src_imag,
-        t_float* _dst_real, t_float* _dst_imag,
-        t_float* buffer
-    ) {
+    Fourier1d::Fourier1d(void) {
 
-        this->N = _N;
-        this->src_real = _src_real;
-        this->src_imag = _src_imag;
-        this->dst_real = _dst_real;
-        this->dst_imag = _dst_imag;
 
-        this->tmp_real = buffer;
-        this->tmp_imag = buffer + (_N >> 1);
 
     }
 
-    t_err Fourier1d::PreCalc(void) {
+    void Fourier1d::PreCalc(void) {
 
-        const t_uint halfN = N >> 1;
+        // バタフライ演算の階層数(=log2(N))
+        // t_uint M = std::bit_width(N) - 1; // C++20
+        this->M = 0;
+        while ( (1u << this->M) < this->N ) {
+            this->M++;
+        }
+
+        const t_int halfN = N >> 1;
         constexpr t_float PI2f = static_cast<t_float>(M_PI * 2.0);
         const t_float angle_step = PI2f / static_cast<t_float>(N);
 
-        for (t_uint j = 0; j < halfN; j++) {
+        #pragma omp parallel for simd
+        for (t_int j = 0; j < halfN; j++) {
 
             t_float angle = angle_step * static_cast<t_float>(j);
-            tmp_real[j] = std::cos(angle);
-            tmp_imag[j] = std::sin(angle);
+            rot_buffer.real[j] = std::cos(angle);
+            rot_buffer.imag[j] = std::sin(angle);
 
         }
 
-        return t_err_None;
+        for (t_int i = 0; i < this->N; i++) {
+
+            this->rev_table[i] = reverseIndex(i, this->M);
+
+        }
+
+    }
+
+    void Fourier1d::PrePlan(
+        t_uint _N,
+        
+        t_float* _fft_src_real, t_float* _fft_src_imag,
+        t_float* _fft_dst_real, t_float* _fft_dst_imag,
+        t_float* _ifft_dst_real, t_float* _ifft_dst_imag,
+
+        t_float* _rot_buffer, t_int* _index_buffer
+    ) {
+
+        this->N = _N;
+
+        this->fftsrc.real = _fft_src_real;
+        this->fftsrc.imag = _fft_src_imag;
+        this->fftdst.real = _fft_dst_real;
+        this->fftdst.imag = _fft_dst_imag;
+        this->ifftdst.real = _ifft_dst_real;
+        this->ifftdst.imag = _ifft_dst_imag;
+
+        this->rot_buffer.real = _rot_buffer;
+        this->rot_buffer.imag = _rot_buffer + (this->N >> 1);
+
+        this->rev_table = _index_buffer;
+
+        this->PreCalc();
 
     }
 
     void Fourier1d::fft(void) {
 
-        // バタフライ演算の階層数(=log2(N))
-        // t_uint M = std::bit_width(N) - 1; // C++20
-        t_uint M = 0;
-        while ( (1u << M) < this->N ) {
-            M++;
-        }
-
-        // まずはdstをバッファとして使う．
         for (t_int i = 0; i < this->N; i++) {
 
-            t_uint r = reverseIndex(i, M);
-            this->dst_real[i] = this->src_real[r];
-            this->dst_imag[i] = this->src_imag[r];
+            t_uint r = this->rev_table[i];
+            this->fftdst.real[i] = this->fftsrc.real[r];
+            this->fftdst.imag[i] = this->fftsrc.imag[r];
 
         }
 
@@ -120,14 +140,14 @@ namespace tImage {
                     t_int Wbuff = (j - (step >> 1)) * N_step;
 
                     // バタフライ演算
-                    t_float WXcosBuf = this->dst_real[downBuff] * this->tmp_real[Wbuff] - this->dst_imag[downBuff] * this->tmp_imag[Wbuff];
-                    t_float WXsinBuf = this->dst_real[downBuff] * this->tmp_imag[Wbuff] + this->dst_imag[downBuff] * this->tmp_real[Wbuff];
+                    t_float WXcosBuf = this->fftdst.real[downBuff] * this->rot_buffer.real[Wbuff] - this->fftdst.imag[downBuff] * this->rot_buffer.imag[Wbuff];
+                    t_float WXsinBuf = this->fftdst.real[downBuff] * this->rot_buffer.imag[Wbuff] + this->fftdst.imag[downBuff] * this->rot_buffer.real[Wbuff];
 
                     // 演算結果を格納
-                    this->dst_real[downBuff] = this->dst_real[upBuff] - WXcosBuf;
-                    this->dst_imag[downBuff] = this->dst_imag[upBuff] - WXsinBuf;
-                    this->dst_real[upBuff] += WXcosBuf;
-                    this->dst_imag[upBuff] += WXsinBuf;
+                    this->fftdst.real[downBuff] = this->fftdst.real[upBuff] - WXcosBuf;
+                    this->fftdst.imag[downBuff] = this->fftdst.imag[upBuff] - WXsinBuf;
+                    this->fftdst.real[upBuff] += WXcosBuf;
+                    this->fftdst.imag[upBuff] += WXsinBuf;
 
                 }
             }
@@ -138,19 +158,11 @@ namespace tImage {
 
     void Fourier1d::ifft(void) {
 
-        // バタフライ演算の階層数(=log2(N))
-        // t_uint M = std::bit_width(N) - 1; // C++20
-        t_uint M = 0;
-        while ( (1u << M) < this->N ) {
-            M++;
-        }
-
-        // まずはdstをバッファとして使う．
         for (t_int i = 0; i < this->N; i++) {
 
-            t_uint r = reverseIndex(i, M);
-            this->src_real[r] = this->dst_real[i];
-            this->src_imag[r] = this->dst_imag[i];
+            t_uint r = this->rev_table[i];
+            this->ifftdst.real[r] = this->fftdst.real[i];
+            this->ifftdst.imag[r] = this->fftdst.imag[i];
 
         }
 
@@ -177,14 +189,14 @@ namespace tImage {
                     t_int Wbuff = (j - half_step) * N_step;
 
                     // バタフライ演算
-                    t_float WXcosBuf = this->src_real[downBuff] * this->tmp_real[Wbuff] + this->src_imag[downBuff] * this->tmp_imag[Wbuff];
-                    t_float WXsinBuf = this->src_imag[downBuff] * this->tmp_real[Wbuff] - this->src_real[downBuff] * this->tmp_imag[Wbuff];
+                    t_float WXcosBuf = this->ifftdst.real[downBuff] * this->rot_buffer.real[Wbuff] + this->ifftdst.imag[downBuff] * this->rot_buffer.imag[Wbuff];
+                    t_float WXsinBuf = this->ifftdst.imag[downBuff] * this->rot_buffer.real[Wbuff] - this->ifftdst.real[downBuff] * this->rot_buffer.imag[Wbuff];
 
                     // 演算結果を格納
-                    this->src_real[downBuff] = this->src_real[upBuff] - WXcosBuf;
-                    this->src_imag[downBuff] = this->src_imag[upBuff] - WXsinBuf;
-                    this->src_real[upBuff] += WXcosBuf;
-                    this->src_imag[upBuff] += WXsinBuf;
+                    this->ifftdst.real[downBuff] = this->ifftdst.real[upBuff] - WXcosBuf;
+                    this->ifftdst.imag[downBuff] = this->ifftdst.imag[upBuff] - WXsinBuf;
+                    this->ifftdst.real[upBuff] += WXcosBuf;
+                    this->ifftdst.imag[upBuff] += WXsinBuf;
 
                 }
             }
@@ -215,16 +227,16 @@ namespace tImage {
                     t_int Wbuff = (j - half_step) * N_step;
 
                     // バタフライ演算
-                    t_float WXcosBuf = this->src_real[downBuff] * this->tmp_real[Wbuff] + this->src_imag[downBuff] * this->tmp_imag[Wbuff];
-                    t_float WXsinBuf = this->src_imag[downBuff] * this->tmp_real[Wbuff] - this->src_real[downBuff] * this->tmp_imag[Wbuff];
+                    t_float WXcosBuf = this->ifftdst.real[downBuff] * this->rot_buffer.real[Wbuff] + this->ifftdst.imag[downBuff] * this->rot_buffer.imag[Wbuff];
+                    t_float WXsinBuf = this->ifftdst.imag[downBuff] * this->rot_buffer.real[Wbuff] - this->ifftdst.real[downBuff] * this->rot_buffer.imag[Wbuff];
 
                     // 演算結果を格納
                     // 正規化係数をかける
                     // そうすれば，芋づる式にすべての係数も正規化される
-                    this->src_real[downBuff]  = (this->src_real[upBuff] - WXcosBuf) * scale;
-                    this->src_imag[downBuff]  = (this->src_imag[upBuff] - WXsinBuf) * scale;
-                    this->src_real[upBuff]    = (this->src_real[upBuff] + WXcosBuf) * scale;
-                    this->src_imag[upBuff]    = (this->src_imag[upBuff] + WXsinBuf) * scale;
+                    this->ifftdst.real[downBuff]  = (this->ifftdst.real[upBuff] - WXcosBuf) * scale;
+                    this->ifftdst.imag[downBuff]  = (this->ifftdst.imag[upBuff] - WXsinBuf) * scale;
+                    this->ifftdst.real[upBuff]    = (this->ifftdst.real[upBuff] + WXcosBuf) * scale;
+                    this->ifftdst.imag[upBuff]    = (this->ifftdst.imag[upBuff] + WXsinBuf) * scale;
 
                 }
             }

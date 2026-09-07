@@ -34,31 +34,41 @@ void test_Fourier1d(void) {
 	}
 	
 	// paddedNに合わせて出力メモリを確保
-	t_float* dst_real = (t_float*)malloc(sizeof(t_float) * paddedN);
-	t_float* dst_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
-	// 一時メモリも確保
-	t_float* buffer = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_float* fftdst_real = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_float* fftdst_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_float* ifftdst_real = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_float* ifftdst_imag = (t_float*)malloc(sizeof(t_float) * paddedN);
 
-	Fourier1d fourier1d(paddedN, src_real, src_imag, dst_real, dst_imag, buffer);
-	fourier1d.PreCalc();
+	// 作業用メモリ確保
+	t_float* rot_buffer = (t_float*)malloc(sizeof(t_float) * paddedN);
+	t_int* rev_table = (t_int*)malloc(sizeof(t_int) * paddedN);
+
+	Fourier1d fourier1d;
+	fourier1d.PrePlan(
+		paddedN,
+		src_real, src_imag,
+		fftdst_real, fftdst_imag,
+		ifftdst_real, ifftdst_imag,
+		rot_buffer, rev_table
+	);
 
 	printf("start fft.\n");
 	fourier1d.fft();
 
-	printf("dest data:\n");
+	printf("fft dest data:\n");
 	#ifdef _PRE
 	for (t_uint i = 0; i < paddedN; i++){
-		PRE_LOG("[%u] : %f + %fi\n", i, dst_real[i], dst_imag[i]);
+		PRE_LOG("[%u] : %f + %fi\n", i, fftdst_real[i], fftdst_imag[i]);
 	}
 	#endif
 
 	printf("start ifft.\n");
 	fourier1d.ifft();
 
-	printf("source data:\n");
+	printf("ifft dest data:\n");
 	#ifdef _PRE
 	for (t_uint i = 0; i < paddedN; i++){
-		PRE_LOG("[%u] : %f + %fi\n", i, src_real[i], src_imag[i]);
+		PRE_LOG("[%u] : %f + %fi\n", i, ifftdst_real[i], ifftdst_imag[i]);
 	}
 	#endif
 
@@ -72,9 +82,12 @@ void test_Fourier1d(void) {
 
 	free(src_real);
 	free(src_imag);
-	free(dst_real);
-	free(dst_imag);
-	free(buffer);
+	free(fftdst_real);
+	free(fftdst_imag);
+	free(ifftdst_real);
+	free(ifftdst_imag);
+	free(rot_buffer);
+	free(rev_table);
 
 }
 
