@@ -147,6 +147,9 @@ namespace tImage {
 		//DLL_EXPORT t_err fill();
 
 		DLL_EXPORT t_bool operator==(const Image& img) const;
+		
+		DLL_EXPORT t_uchar& operator()(t_uint x, t_uint y);
+		//DLL_EXPORT t_uchar& operator()(t_uint x, t_uint y, t_uint c);
 
 	};
 

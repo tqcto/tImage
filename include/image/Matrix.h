@@ -1,5 +1,6 @@
 #pragma once
 #include "../tImage_definition.h"
+#include "../manage/manage.h"
 
 #include <stdlib.h>
 
@@ -26,12 +27,14 @@ namespace tImage {
 		t_err _allocate_memory() {
 
             // calc stride
-            this->_stride = calcStride4Matrix(this->_cols, sizeof(T), this->_align);
+            t_uint64 stride_bytes = calcStride4Matrix(
+                this->_cols * static_cast<t_uint>(sizeof(T)), this->_align);
+            this->_stride = (stride_bytes + sizeof(T) - 1) / sizeof(T);
 
             // total bytes
-            t_uint64 total_bytes = this->_stride * (t_uint64)this->_height;
+            t_uint64 total_bytes = this->_stride * this->_rows * sizeof(T);
 
-            this->data = (t_uchar*)malloc(total_bytes);
+            this->data = (T*)malloc(total_bytes);
 
             return this->data != nullptr ? t_err_None : t_err_MemoryAllocationFailed;
 
@@ -105,10 +108,14 @@ namespace tImage {
             this->_cols = cols;
             this->_rows = rows;
 
+            /*
             err |= this->setAlign(align);
             if (err != t_err_None) return err;
+            */
 
-            this->_stride = calcStride4Matrix(cols, sizeof(T), _align);
+            t_uint64 stride_bytes = calcStride4Matrix(
+                cols * static_cast<t_uint>(sizeof(T)), _align);
+            this->_stride = (stride_bytes + sizeof(T) - 1) / sizeof(T);
 
             this->data = src;
             this->_external_memory = true;
@@ -129,6 +136,8 @@ namespace tImage {
 
             if (err != t_err_None) return t_err_MemoryAllocationFailed;
 
+            return t_err_None;
+
         }
 
 		/* Release memory */
@@ -145,7 +154,7 @@ namespace tImage {
             this->data = nullptr;
             this->_external_memory = false;
 
-            this->_align = T_IMAGE_DEFAULT_ALIGN;
+            //this->_align = T_IMAGE_DEFAULT_ALIGN;
 
             this->_cols = 0;
             this->_rows = 0;
@@ -171,6 +180,13 @@ namespace tImage {
 		/* Get stride of image */
 		DLL_EXPORT t_uint64 stride() const noexcept {
             return this->_stride;
+        }
+
+        // 書き込み用
+        DLL_EXPORT T& operator()(t_uint col, t_uint row) {
+
+        return this->data[row * this->_stride + col];
+
         }
 
 	};

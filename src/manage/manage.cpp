@@ -32,16 +32,25 @@ namespace tImage {
 
 	}
 
-	t_uint64 calcStride4Matrix(t_uint cols, t_uint64 size, t_uint align) {
+	t_uint calcStride4Matrix(t_uint cols, t_uint align) {
+
+		// check align
+		assert((align & (align - 1)) == 0);
+
+		// calc stride
+		return (cols + (align - 1)) & ~(align - 1);
+
+	}
+	t_uint64 calcSize4Matrix(t_uint cols, t_uint rows, t_uint64 size, t_uint align) {
 
 		// check align
 		assert((align & (align - 1)) == 0);
 
 		// bytes per a row. but, this isn't considered align.
-		t_uint64 bytes_per_row = static_cast<t_uint64>(cols) * size;
+		t_uint64 bytes_per_row = static_cast<t_uint64>(cols) * size * static_cast<t_uint64>(rows);
 
 		// calc stride
-		return (bytes_per_row + (align - 1)) & ~(align - 1);
+		return (bytes_per_row + static_cast<t_uint64>(align - 1)) & ~static_cast<t_uint64>(align - 1);
 
 	}
 	t_uint64 calcStride(t_uint width, t_uint channels, t_uint depth, t_uint align) {
