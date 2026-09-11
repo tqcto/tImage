@@ -48,11 +48,11 @@ namespace tImage {
 		// initialize class
 
 		/* Initialize empty class */
-		DLL_EXPORT Matrix(void) {
+		inline Matrix(void) {
 
         };
 		/* Initialize class from allocate function */
-		DLL_EXPORT Matrix(t_uint cols, t_uint rows) {
+		inline Matrix(t_uint cols, t_uint rows) {
 
             t_err err = this->allocate(cols, rows);
 
@@ -73,7 +73,7 @@ namespace tImage {
 
         }
 
-		DLL_EXPORT ~Matrix() {
+		~Matrix() {
 
             if (this->data) {
                 this->release();
@@ -82,7 +82,7 @@ namespace tImage {
         }
 
 		/* Set align. Only powers of 2 can be specified. */
-		DLL_EXPORT t_err setAlign(t_uint align) {
+		inline t_err setAlign(t_uint align) {
 
             if (align & (align - 1) && !(this->data)) return t_err_InvalidArgument;
             
@@ -92,7 +92,7 @@ namespace tImage {
         }
 
 		/* Input image of other memory*/
-		DLL_EXPORT t_err input(
+		t_err input(
 			T* src,
 			t_uint cols, t_uint rows,
 			t_uint align
@@ -125,7 +125,7 @@ namespace tImage {
         }
 
 		/* Allocate memory of image */
-		DLL_EXPORT t_err allocate(t_uint cols, t_uint rows) {
+        t_err allocate(t_uint cols, t_uint rows) {
 
             if (!cols || !rows) return t_err_InvalidArgument;
 
@@ -141,7 +141,7 @@ namespace tImage {
         }
 
 		/* Release memory */
-		DLL_EXPORT void release() {
+		void release() {
 
             if (this->_external_memory) {
             
@@ -163,29 +163,42 @@ namespace tImage {
         }
 
 		/* Get whether class is empty. If empty then returned true. */
-		DLL_EXPORT t_bool empty() const noexcept {
+		inline t_bool empty() const noexcept {
 
             return !(this->data != nullptr | this->_cols | this->_rows);
 
         }
 
+        // 読み取り用行ポインタ取得
+        inline const T* rowPtr(t_uint row) const noexcept {
+
+            return this->data + row * this->_stride;
+
+        }
+        // 書き込み用行ポインタを取得
+        inline T* rowPtr(t_uint row) noexcept {
+
+            return this->data + row * this->_stride;
+
+        }
+
 		/* Get width of image */
-		DLL_EXPORT t_uint cols() const noexcept {
+		inline t_uint cols() const noexcept {
             return this->_cols;
         }
 		/* Get height of image */
-		DLL_EXPORT t_uint rows() const noexcept {
+		inline t_uint rows() const noexcept {
             return this->_rows;
         }
 		/* Get stride of image */
-		DLL_EXPORT t_uint64 stride() const noexcept {
+		inline t_uint64 stride() const noexcept {
             return this->_stride;
         }
 
         // 書き込み用
-        DLL_EXPORT T& operator()(t_uint col, t_uint row) {
+        inline T& operator()(t_uint col, t_uint row) {
 
-        return this->data[row * this->_stride + col];
+            return this->data[row * this->_stride + col];
 
         }
 
