@@ -184,7 +184,7 @@ namespace tImage {
 		this->data = nullptr;
 		this->_external_memory = false;
 
-		this->_align = T_IMAGE_DEFAULT_ALIGN;
+		//this->_align = T_IMAGE_DEFAULT_ALIGN;
 
 		this->_cols = 0;
 		this->_rows = 0;
@@ -354,6 +354,19 @@ namespace tImage {
 			( this->empty() && img.empty() );
 
 	}
+
+	t_uchar& Image::operator()(t_uint x, t_uint y) {
+
+		return this->data[y * this->_stride + x * this->format.channels];
+
+	}
+	/*
+	t_uchar& Image::operator()(t_uint x, t_uint y, t_uint c) {
+
+		return this->data[y * this->_stride + x * this->format.channels + c];
+
+	}
+	*/
 
 	t_err decodePNG(Image* dst, const char* filepath) {
 

@@ -153,7 +153,38 @@ void test_fft(void) {
 
 }
 
+void test_Matrix(void) {
+
+	t_uint cols = 10;
+	t_uint rows = 10;
+
+	Matrix<t_float> mat(cols, rows);
+
+	for (t_uint i = 0; i < cols; i++) {
+		for (t_uint j = 0; j < rows; j++) {
+
+			mat(i, j) = static_cast<t_float>(j * i);
+
+		}
+	}
+
+	for (t_uint i = 0; i < cols; i++) {
+		for (t_uint j = 0; j < rows; j++) {
+
+			printf("%lf ", mat(i, j));
+
+		}
+		printf("\n");
+	}
+
+	mat.release();
+
+}
+
 int main(void) {
+
+	test_Matrix();
+	printf("matrix finish.\n");
 
 	//test_fft();
 	test_Fourier1d();
