@@ -12,6 +12,9 @@ namespace tImage {
 		// calc stride
 		this->_stride = calcStride(this->_cols, this->format.channels, this->depth(), this->_align);
 
+		// calc elements of a row
+		this->_elements_row = this->_stride / sizeof(t_uchar);
+
 		// total bytes
 		t_uint64 total_bytes = this->_stride * (t_uint64)this->_rows;
 
@@ -85,7 +88,6 @@ namespace tImage {
 	}
 	*/
 
-	/*
 	Image::~Image() {
 
 		if (this->data) {
@@ -93,7 +95,6 @@ namespace tImage {
 		}
 
 	}
-	*/
 
 	/*
 	t_err Image::setAlign(t_uint align) {
@@ -131,6 +132,7 @@ namespace tImage {
 		if (err != t_err_None) return err;
 
 		this->_stride = calcStride(width, channels, depth, _align);
+		this->_elements_row = this->_stride / sizeof(t_uchar);
 
 		this->data = src;
 		this->_external_memory = true;
@@ -154,6 +156,8 @@ namespace tImage {
 
 		if (err != t_err_None) return t_err_MemoryAllocationFailed;
 
+		return t_err_None;
+
 	}
 	t_err Image::allocate(t_uint width, t_uint height, t_uint channels, t_uint depth) {
 
@@ -169,26 +173,16 @@ namespace tImage {
 
 		if (err != t_err_None) return t_err_MemoryAllocationFailed;
 
+		return t_err_None;
+
 	}
 
 	void Image::release() {
 
-		if (this->_external_memory) {
-		
-			//throw "External memory can't be release.";
-			return;
-		
-		}
+		Matrix<t_uchar>::release();
 
-		free(this->data);
-		this->data = nullptr;
-		this->_external_memory = false;
+		if (this->_external_memory) return;
 
-		//this->_align = T_IMAGE_DEFAULT_ALIGN;
-
-		this->_cols = 0;
-		this->_rows = 0;
-		this->_stride = 0;
 		this->format.bytes_per_pixel = 0;
 		this->format.channels = 0;
 
@@ -357,7 +351,7 @@ namespace tImage {
 
 	t_uchar& Image::operator()(t_uint x, t_uint y) {
 
-		return this->data[y * this->_stride + x * this->format.channels];
+		return this->data[y * this->_stride + x * this->format.bytes_per_pixel];
 
 	}
 	/*

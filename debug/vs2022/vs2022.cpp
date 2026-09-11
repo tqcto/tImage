@@ -161,17 +161,19 @@ void test_Matrix(void) {
 	Matrix<t_float> mat(cols, rows);
 
 	for (t_uint i = 0; i < cols; i++) {
+		t_float* row_ptr = mat.rowPtr(i);
 		for (t_uint j = 0; j < rows; j++) {
 
-			mat(i, j) = static_cast<t_float>(j * i);
+			row_ptr[j] = static_cast<t_float>(j * i);
 
 		}
 	}
 
 	for (t_uint i = 0; i < cols; i++) {
+		const t_float* row_ptr = mat.rowPtr(i);
 		for (t_uint j = 0; j < rows; j++) {
 
-			printf("%lf ", mat(i, j));
+			printf("%lf ", row_ptr[j]);
 
 		}
 		printf("\n");
