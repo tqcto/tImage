@@ -15,7 +15,8 @@ namespace tImage {
 
 		t_uint _cols = 0;
 		t_uint _rows = 0;
-		t_uint64 _stride = 0;		// length of a row
+        t_uint64 _elements_row = 0;   // elements of a row
+		t_uint64 _stride = 0;	    // bytes of a row
 		//t_uint _channels = 8;
 		//t_uint _depth = 8;		// Color depth. usually 8.
 		//PixelFormat format;		// pixel format
@@ -27,12 +28,11 @@ namespace tImage {
 		t_err _allocate_memory() {
 
             // calc stride
-            t_uint64 stride_bytes = calcStride4Matrix(
-                this->_cols * static_cast<t_uint>(sizeof(T)), this->_align);
-            this->_stride = (stride_bytes + sizeof(T) - 1) / sizeof(T);
+            this->_stride = calcStride4Matrix(this->_cols, sizeof(T), this->_align);;
+            this->_elements_row = this->_stride / sizeof(T);
 
             // total bytes
-            t_uint64 total_bytes = this->_stride * this->_rows * sizeof(T);
+            t_uint64 total_bytes = this->_stride * this->_rows;
 
             this->data = (T*)malloc(total_bytes);
 
@@ -113,9 +113,8 @@ namespace tImage {
             if (err != t_err_None) return err;
             */
 
-            t_uint64 stride_bytes = calcStride4Matrix(
-                cols * static_cast<t_uint>(sizeof(T)), _align);
-            this->_stride = (stride_bytes + sizeof(T) - 1) / sizeof(T);
+            this->_stride = calcStride4Matrix(cols, sizeof(T), _align);
+            this->_elements_row = this->_stride / sizeof(T);
 
             this->data = src;
             this->_external_memory = true;
@@ -158,6 +157,7 @@ namespace tImage {
 
             this->_cols = 0;
             this->_rows = 0;
+            this->_elements_row = 0;
             this->_stride = 0;
 
         }
@@ -172,13 +172,13 @@ namespace tImage {
         // 読み取り用行ポインタ取得
         inline const T* rowPtr(t_uint row) const noexcept {
 
-            return this->data + row * this->_stride;
+            return this->data + row * this->_elements_row;
 
         }
         // 書き込み用行ポインタを取得
         inline T* rowPtr(t_uint row) noexcept {
 
-            return this->data + row * this->_stride;
+            return this->data + row * this->_elements_row;
 
         }
 
@@ -190,6 +190,10 @@ namespace tImage {
 		inline t_uint rows() const noexcept {
             return this->_rows;
         }
+        // 1行の要素数を取得
+        inline t_uint64 elementsRow() const noexcept {
+            return this->_elements_row;
+        }
 		/* Get stride of image */
 		inline t_uint64 stride() const noexcept {
             return this->_stride;
@@ -198,7 +202,7 @@ namespace tImage {
         // 書き込み用
         inline T& operator()(t_uint col, t_uint row) {
 
-            return this->data[row * this->_stride + col];
+            return this->data[row * this->_elements_row + col];
 
         }
 
