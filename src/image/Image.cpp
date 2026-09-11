@@ -85,7 +85,6 @@ namespace tImage {
 	}
 	*/
 
-	/*
 	Image::~Image() {
 
 		if (this->data) {
@@ -93,8 +92,7 @@ namespace tImage {
 		}
 
 	}
-	*/
-
+	
 	/*
 	t_err Image::setAlign(t_uint align) {
 
@@ -357,7 +355,7 @@ namespace tImage {
 
 	t_uchar& Image::operator()(t_uint x, t_uint y) {
 
-		return this->data[y * this->_stride + x * this->format.channels];
+		return this->data[y * this->_stride + x * this->format.bytes_per_pixel];
 
 	}
 	/*

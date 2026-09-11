@@ -94,7 +94,7 @@ namespace tImage {
 		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, t_uint depth);
 		//DLL_EXPORT Image(t_uint width, t_uint height, t_uint channles, BitsPerChannel unpacked_format);
 
-		// DLL_EXPORT ~Image();
+		DLL_EXPORT ~Image();
 
 		/* Set align. Only powers of 2 can be specified. */
 		// DLL_EXPORT t_err setAlign(t_uint align);
