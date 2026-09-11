@@ -169,16 +169,10 @@ namespace tImage {
 
         }
 
-        // 読み取り用行ポインタ取得
-        inline const T* rowPtr(t_uint row) const noexcept {
-
-            return this->data + row * this->_elements_row;
-
-        }
         // 書き込み用行ポインタを取得
         inline T* rowPtr(t_uint row) noexcept {
 
-            return this->data + row * this->_elements_row;
+            return &this->data[row * this->_elements_row];
 
         }
 

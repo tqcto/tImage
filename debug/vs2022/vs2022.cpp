@@ -9,7 +9,7 @@
 
 using namespace tImage;
 
-//#define _PRE
+#define _PRE
 
 #ifdef _PRE
 #define PRE_LOG	printf
@@ -20,8 +20,8 @@ using namespace tImage;
 void test_Fourier1d(void) {
 
 	//const t_uint N = 1920 * 1080 * 3;
-	const t_uint N = 1920 * 3;
-	//const t_uint N = 10;
+	//const t_uint N = 1920 * 3;
+	const t_uint N = 10;
 	t_uint paddedN = calc_paddinhg(N);
 	
 	printf("source data:\n");
@@ -183,13 +183,83 @@ void test_Matrix(void) {
 
 }
 
+void test_transpose(void) {
+
+	const t_uint cols = 3;
+	const t_uint rows = 5;
+
+	Matrix<t_float> real(cols, rows);
+	Matrix<t_float> imag(cols, rows);
+
+	Matrix<t_float> dst_real(rows, cols);
+	Matrix<t_float> dst_imag(rows, cols);
+
+	for (t_int i = 0; i < rows; i++) {
+		auto real_rowptr= real.rowPtr(i);
+		auto imag_rowptr= imag.rowPtr(i);		
+		for (t_int j = 0; j < cols; j++) {
+
+			real_rowptr[j] = j + 1;
+			imag_rowptr[j] = i - j;
+
+		}
+	}
+
+	printf("src real:\n");
+	for (t_int i = 0; i < rows; i++) {
+		auto rowptr= real.rowPtr(i);		
+		for (t_int j = 0; j < cols; j++) {
+
+			printf("%lf ", rowptr[j]);
+
+		}
+		printf("\n");
+	}
+	printf("src imag:\n");
+	for (t_int i = 0; i < rows; i++) {
+		auto rowptr= imag.rowPtr(i);		
+		for (t_int j = 0; j < cols; j++) {
+
+			printf("%lf ", rowptr[j]);
+
+		}
+		printf("\n");
+	}
+
+	transpose(&real, &imag, &dst_real, &dst_imag);
+
+	printf("dst real:\n");
+	for (t_int i = 0; i < dst_real.rows(); i++) {
+		auto rowptr = dst_real.rowPtr(i);		
+		for (t_int j = 0; j < dst_real.cols(); j++) {
+
+			printf("%lf ", rowptr[j]);
+
+		}
+		printf("\n");
+	}
+
+	printf("dst imag:\n");
+	for (t_int i = 0; i < dst_imag.rows(); i++) {
+		auto rowptr = dst_imag.rowPtr(i);		
+		for (t_int j = 0; j < dst_imag.cols(); j++) {
+
+			printf("%lf ", rowptr[j]);
+
+		}
+		printf("\n");
+	}
+
+}
+
 int main(void) {
 
-	test_Matrix();
-	printf("matrix finish.\n");
-
+	//test_Matrix();
+	
 	//test_fft();
-	test_Fourier1d();
+	//test_Fourier1d();
+
+	test_transpose();
 	
     Image src;
     decodePNG(&src, IMG_PATH);
