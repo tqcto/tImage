@@ -1,11 +1,17 @@
 #include "../../include/tool/fft.h"
+#include "../../include/tool/transpose.h"
 
 //#include <bit>		// C++20
 //#include <numbers>	// C++20
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <cmath>
+
+#if defined(_OPENMP)
 #include <omp.h>
+#endif
+
+namespace {
+constexpr tImage::t_float kPi = 3.14159265358979323846f;
+}
 
 namespace tImage {
 
@@ -45,6 +51,13 @@ namespace tImage {
 
     }
 
+    t_uint calcPaddedSize(t_uint n, t_uint blockSize) {
+
+        if (blockSize == 0) return 0;
+        return ((n + blockSize - 1) / blockSize) * blockSize;
+
+    }
+
     Fourier1d::Fourier1d(void) {
 
 
@@ -61,10 +74,10 @@ namespace tImage {
         }
 
         const t_int halfN = N >> 1;
-        constexpr t_float PI2f = static_cast<t_float>(M_PI * 2.0);
+        constexpr t_float PI2f = kPi * 2.0f;
         const t_float angle_step = PI2f / static_cast<t_float>(N);
 
-        #pragma omp parallel for simd
+        //#pragma omp parallel for simd
         for (t_int j = 0; j < halfN; j++) {
 
             t_float angle = angle_step * static_cast<t_float>(j);
@@ -106,6 +119,21 @@ namespace tImage {
         this->rev_table = _index_buffer;
 
         this->PreCalc();
+
+    }
+
+    void Fourier1d::RePlan(
+        t_float* _fft_src_real, t_float* _fft_src_imag,
+        t_float* _fft_dst_real, t_float* _fft_dst_imag,
+        t_float* _ifft_dst_real, t_float* _ifft_dst_imag
+    ) {
+
+        this->fftsrc.real = _fft_src_real;
+        this->fftsrc.imag = _fft_src_imag;
+        this->fftdst.real = _fft_dst_real;
+        this->fftdst.imag = _fft_dst_imag;
+        this->ifftdst.real = _ifft_dst_real;
+        this->ifftdst.imag = _ifft_dst_imag;
 
     }
 
@@ -249,7 +277,7 @@ namespace tImage {
     void Fourier1d::dft(void) {
         if (this->N == 0) return;
 
-        constexpr t_float PI2f = static_cast<t_float>(M_PI * 2.0);
+            constexpr t_float PI2f = kPi * 2.0f;
         const t_float angle_step = PI2f / static_cast<t_float>(this->N);
 
         for (t_uint k = 0; k < this->N; k++) {
@@ -298,6 +326,239 @@ namespace tImage {
     }
     */
 
+    void Fourier2d::PrePlan(
+        Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+        Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+        Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
+        Fourier2dWorkspace* _workspace
+    ) {
+
+        this->block_plan_ready = false;
+        if (_fft_src_real == nullptr || _fft_src_imag == nullptr ||
+            _fft_dst_real == nullptr || _fft_dst_imag == nullptr ||
+            _workspace == nullptr) {
+            return;
+        }
+
+        this->fft_src_real = _fft_src_real;
+        this->fft_src_imag = _fft_src_imag;
+        this->fft_dst_real = _fft_dst_real;
+        this->fft_dst_imag = _fft_dst_imag;
+        this->ifft_dst_real = _ifft_dst_real;
+        this->ifft_dst_imag = _ifft_dst_imag;
+
+        this->cols = _fft_src_real->cols();
+        this->rows = _fft_src_real->rows();
+        // Matrix::align() is a byte alignment; FFT indexes t_float elements.
+        this->blockSize = _fft_src_real->align() / sizeof(t_float);
+        if (this->blockSize == 0) this->blockSize = 1;
+
+        if (_workspace != nullptr) {
+            this->workspace = *_workspace;
+        } else {
+            this->workspace = {};
+        }
+
+        this->block_plan_ready =
+            this->cols != 0 && this->rows != 0 &&
+            this->cols == _fft_src_imag->cols() &&
+            this->rows == _fft_src_imag->rows() &&
+            this->cols == _fft_dst_real->cols() &&
+            this->rows == _fft_dst_real->rows() &&
+            this->cols == _fft_dst_imag->cols() &&
+            this->rows == _fft_dst_imag->rows() &&
+            (this->cols % this->blockSize) == 0 &&
+            (this->rows % this->blockSize) == 0 &&
+            this->workspace.block_src_real != nullptr &&
+            this->workspace.block_src_imag != nullptr &&
+            this->workspace.block_fft_real != nullptr &&
+            this->workspace.block_fft_imag != nullptr &&
+            this->workspace.rotation_buffer != nullptr &&
+            this->workspace.index_buffer != nullptr;
+
+        if (this->block_plan_ready) {
+            this->block_fourier.PrePlan(
+                this->blockSize,
+                this->workspace.block_src_real,
+                this->workspace.block_src_imag,
+                this->workspace.block_fft_real,
+                this->workspace.block_fft_imag,
+                nullptr, nullptr,
+                this->workspace.rotation_buffer,
+                this->workspace.index_buffer
+            );
+        }
+
+    }
+
+    Fourier2d::Fourier2d(void) {
+    }
+
+    void Fourier2d::block_fft(t_uint block_x, t_uint block_y) {
+
+        const t_uint size = this->blockSize;
+
+        /*
+        if (!this->block_plan_ready ||
+            this->workspace.block_src_real == nullptr ||
+            this->workspace.block_src_imag == nullptr ||
+            this->workspace.block_fft_real == nullptr ||
+            this->workspace.block_fft_imag == nullptr ||
+            this->workspace.column_src_real == nullptr ||
+            this->workspace.column_src_imag == nullptr ||
+            this->workspace.column_fft_real == nullptr ||
+            this->workspace.column_fft_imag == nullptr ||
+            this->workspace.rotation_buffer == nullptr ||
+            this->workspace.index_buffer == nullptr) {
+            return;
+        }
+        */
+
+        t_float* block_src_real = this->workspace.block_src_real;
+        t_float* block_src_imag = this->workspace.block_src_imag;
+        t_float* block_fft_real = this->workspace.block_fft_real;
+        t_float* block_fft_imag = this->workspace.block_fft_imag;
+        t_float* column_src_real = this->workspace.column_src_real;
+        t_float* column_src_imag = this->workspace.column_src_imag;
+        t_float* column_fft_real = this->workspace.column_fft_real;
+        t_float* column_fft_imag = this->workspace.column_fft_imag;
+
+        for (t_int y = 0; y < size; ++y) {
+            const t_float* src_real = this->fft_src_real->rowPtr(block_y + y) + block_x;
+            const t_float* src_imag = this->fft_src_imag->rowPtr(block_y + y) + block_x;
+
+            for (t_int x = 0; x < size; ++x) {
+                block_src_real[y * size + x] = src_real[x];
+                block_src_imag[y * size + x] = src_imag[x];
+            }
+        }
+
+        for (t_int y = 0; y < size; ++y) {
+            this->block_fourier.RePlan(
+                &block_src_real[y * size], &block_src_imag[y * size],
+                &block_fft_real[y * size], &block_fft_imag[y * size],
+                nullptr, nullptr
+            );
+            this->block_fourier.fft();
+        }
+
+        for (t_int x = 0; x < size; ++x) {
+            for (t_int y = 0; y < size; ++y) {
+                column_src_real[y] = block_fft_real[y * size + x];
+                column_src_imag[y] = block_fft_imag[y * size + x];
+            }
+
+            this->block_fourier.RePlan(
+                column_src_real, column_src_imag,
+                column_fft_real, column_fft_imag,
+                nullptr, nullptr
+            );
+            this->block_fourier.fft();
+
+            for (t_int y = 0; y < size; ++y) {
+                this->fft_dst_real->rowPtr(block_y + y)[block_x + x] = column_fft_real[y];
+                this->fft_dst_imag->rowPtr(block_y + y)[block_x + x] = column_fft_imag[y];
+            }
+        }
+    }
+
+    void Fourier2d::fft(void) {
+
+        if (this->fft_src_real == nullptr || this->fft_src_imag == nullptr ||
+            this->fft_dst_real == nullptr || this->fft_dst_imag == nullptr ||
+            this->blockSize == 0 || this->cols == 0 || this->rows == 0) {
+            return;
+        }
+
+        for (t_int block_y = 0; block_y < this->rows; block_y += this->blockSize) {
+            for (t_int block_x = 0; block_x < this->cols; block_x += this->blockSize) {
+                this->block_fft(block_x, block_y);
+            }
+        }
+    }
+
+    void Fourier2d::block_ifft(t_uint block_x, t_uint block_y) {
+
+        const t_uint size = this->blockSize;
+
+        /*
+        if (!this->block_plan_ready ||
+            this->ifft_dst_real == nullptr || this->ifft_dst_imag == nullptr ||
+            this->workspace.block_src_real == nullptr ||
+            this->workspace.block_src_imag == nullptr ||
+            this->workspace.block_fft_real == nullptr ||
+            this->workspace.block_fft_imag == nullptr ||
+            this->workspace.column_src_real == nullptr ||
+            this->workspace.column_src_imag == nullptr ||
+            this->workspace.column_fft_real == nullptr ||
+            this->workspace.column_fft_imag == nullptr) {
+            return;
+        }
+        */
+
+        t_float* block_src_real = this->workspace.block_src_real;
+        t_float* block_src_imag = this->workspace.block_src_imag;
+        t_float* block_fft_real = this->workspace.block_fft_real;
+        t_float* block_fft_imag = this->workspace.block_fft_imag;
+        t_float* column_src_real = this->workspace.column_src_real;
+        t_float* column_src_imag = this->workspace.column_src_imag;
+        t_float* column_fft_real = this->workspace.column_fft_real;
+        t_float* column_fft_imag = this->workspace.column_fft_imag;
+
+        for (t_uint y = 0; y < size; ++y) {
+            const t_float* src_real = this->fft_dst_real->rowPtr(block_y + y) + block_x;
+            const t_float* src_imag = this->fft_dst_imag->rowPtr(block_y + y) + block_x;
+
+            for (t_uint x = 0; x < size; ++x) {
+                block_src_real[y * size + x] = src_real[x];
+                block_src_imag[y * size + x] = src_imag[x];
+            }
+        }
+
+        for (t_uint y = 0; y < size; ++y) {
+            this->block_fourier.RePlan(
+                nullptr, nullptr,
+                &block_src_real[y * size], &block_src_imag[y * size],
+                &block_fft_real[y * size], &block_fft_imag[y * size]
+            );
+            this->block_fourier.ifft();
+        }
+
+        for (t_uint x = 0; x < size; ++x) {
+            for (t_uint y = 0; y < size; ++y) {
+                column_src_real[y] = block_fft_real[y * size + x];
+                column_src_imag[y] = block_fft_imag[y * size + x];
+            }
+
+            this->block_fourier.RePlan(
+                nullptr, nullptr,
+                column_src_real, column_src_imag,
+                column_fft_real, column_fft_imag
+            );
+            this->block_fourier.ifft();
+
+            for (t_uint y = 0; y < size; ++y) {
+                this->ifft_dst_real->rowPtr(block_y + y)[block_x + x] = column_fft_real[y];
+                this->ifft_dst_imag->rowPtr(block_y + y)[block_x + x] = column_fft_imag[y];
+            }
+        }
+    }
+
+    void Fourier2d::ifft(void) {
+
+        if (this->fft_dst_real == nullptr || this->fft_dst_imag == nullptr ||
+            this->ifft_dst_real == nullptr || this->ifft_dst_imag == nullptr ||
+            this->blockSize == 0 || this->cols == 0 || this->rows == 0) {
+            return;
+        }
+
+        for (t_uint block_y = 0; block_y < this->rows; block_y += this->blockSize) {
+            for (t_uint block_x = 0; block_x < this->cols; block_x += this->blockSize) {
+                this->block_ifft(block_x, block_y);
+            }
+        }
+    }
+
     // 1次元FFT
     // Nは2の累乗である必要がある．そのためには，padding4fft()を持ちいる．
     // tmp1, tmp2はdstのサイズと一致させる．
@@ -330,7 +591,7 @@ namespace tImage {
 
             // あらかじめ必要な係数を計算
             //constexpr t_float PI2f = std::numbers::pi_v<t_float> * 2.0f;	// C++20
-            constexpr t_float PI2f = M_PI * 2.0f;
+            constexpr t_float PI2f = kPi * 2.0f;
             t_float tmp = PI2f / static_cast<float>(step);
             for (t_uint j = 0; j < step >> 1; j++) {
                 t_float angle = tmp * static_cast<t_float>(j);
@@ -402,7 +663,7 @@ namespace tImage {
 
             // あらかじめ必要な係数を計算
             //constexpr t_float PI2f = std::numbers::pi_v<t_float> * 2.0f;	// C++20
-            constexpr t_float PI2f = M_PI * 2.0f;
+            constexpr t_float PI2f = kPi * 2.0f;
             t_float tmp = PI2f / static_cast<float>(step);
             for (t_int j = 0; j < half_step; j++) {
                 t_float angle = tmp * static_cast<t_float>(j);
@@ -445,7 +706,7 @@ namespace tImage {
 
             // あらかじめ必要な係数を計算
             //constexpr t_float PI2f = std::numbers::pi_v<t_float> * 2.0f;	// C++20
-            constexpr t_float PI2f = M_PI * 2.0f;
+            constexpr t_float PI2f = kPi * 2.0f;
             t_float tmp = PI2f / static_cast<float>(step);
             for (t_int j = 0; j < half_step; j++) {
                 t_float angle = tmp * static_cast<t_float>(j);

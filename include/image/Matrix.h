@@ -192,6 +192,9 @@ namespace tImage {
 		inline t_uint64 stride() const noexcept {
             return this->_stride;
         }
+        inline t_uint align() const noexcept {
+            return this->_align;
+        }
 
         // 書き込み用
         inline T& operator()(t_uint col, t_uint row) {

@@ -6,6 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 動的ライブラリ(DLL)か静的ライブラリ(.lib)かを切り替えるオプション (デフォルト: ON = DLL化)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(TIMAGE_ENABLE_OPENMP "Enable OpenMP acceleration" ON)
+
+if(TIMAGE_ENABLE_OPENMP AND NOT EMSCRIPTEN)
+    find_package(OpenMP QUIET)
+endif()
 
 # 自動リンク無効化と静的リンク用マクロ設定
 add_compile_definitions(PNG_STATIC PNG_NO_DLL)
@@ -62,7 +67,17 @@ target_include_directories(tImage
 )
 
 # DLLビルド時用のマクロ定義
-target_compile_definitions(tImage PRIVATE TIMAGE_BUILD_DLL)
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(tImage PRIVATE TIMAGE_BUILD_DLL)
+endif()
+
+if(MSVC)
+    target_compile_options(tImage PRIVATE /openmp:experimental)
+endif()
+
+if(OpenMP_CXX_FOUND AND NOT MSVC)
+    target_link_libraries(tImage PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 # tImage に png_static と zlibstatic をリンク
 target_link_libraries(tImage PRIVATE
@@ -85,7 +100,9 @@ if(NOT EMSCRIPTEN)
         target_link_libraries(tImage_debug PRIVATE tImage)
 
         # デバッグexe側でDLLのインポートマクロを有効化
-        target_compile_definitions(tImage_debug PRIVATE TIMAGE_USE_DLL)
+        if(BUILD_SHARED_LIBS)
+            target_compile_definitions(tImage_debug PRIVATE TIMAGE_USE_DLL)
+        endif()
 
         # デバッグexe側の自動リンク無視設定
         if(MSVC)

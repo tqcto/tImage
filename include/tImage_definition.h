@@ -7,10 +7,12 @@
 namespace tImage {
 
 #ifndef DLL_EXPORT
-#ifdef _DLL
-#define DLL_EXPORT	__declspec(dllexport)
+#if defined(_WIN32) && defined(TIMAGE_BUILD_DLL)
+#define DLL_EXPORT __declspec(dllexport)
+#elif defined(_WIN32) && defined(TIMAGE_USE_DLL)
+#define DLL_EXPORT __declspec(dllimport)
 #else
-#define DLL_EXPORT	__declspec(dllimport)
+#define DLL_EXPORT
 #endif
 #endif
 

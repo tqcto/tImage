@@ -1,6 +1,8 @@
 #include "../../include/tool/split.h"
 
+#if defined(__AVX2__)
 #include <immintrin.h>
+#endif
 
 namespace tImage {
 
@@ -35,6 +37,7 @@ namespace tImage {
         t_uchar* dst_g = dst_planes[1].data;
         t_uchar* dst_b = dst_planes[2].data;
 
+        #if defined(__AVX2__)
         // AVX2: 32ピクセル（96バイト）単位で全ピクセルを処理
         // ストライド超過分は無視（バッファ末尾の padding で吸収）
         for (t_uint64 i = 0; i < total_pixels; i += 32) {
@@ -64,6 +67,13 @@ namespace tImage {
             _mm256_storeu_si256((__m256i*)(dst_g + i), g);
             _mm256_storeu_si256((__m256i*)(dst_b + i), b);
         }
+        #else
+        for (t_uint64 i = 0; i < total_pixels; ++i) {
+            dst_r[i] = src_data[3 * i + 0];
+            dst_g[i] = src_data[3 * i + 1];
+            dst_b[i] = src_data[3 * i + 2];
+        }
+        #endif
 
         return t_err_None;
     }
