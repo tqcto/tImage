@@ -5,13 +5,15 @@
 
 namespace tImage {
 
+    class Fourier1d;
+
     typedef struct {
         t_float *real, *imag;
     } ComplexMems;
 
     // Fourier2d が使用する外部ワークスペース
     // block_* 配列のサイズは blockSize * blockSize、column_*、rotation_buffer、
-    // index_buffer のサイズは blockSize。
+    // index_buffer のサイズは blockSize。block_fourier も呼び出し側が管理する。
     typedef struct {
         t_float* block_src_real;
         t_float* block_src_imag;
@@ -23,6 +25,8 @@ namespace tImage {
         t_float* column_fft_imag;
         t_float* rotation_buffer;
         t_int* index_buffer;
+        // 並列APIではワークスペースごとに別のFourier1dを指定する。
+        Fourier1d* block_fourier;
     } Fourier2dWorkspace;
 
     // FFT用にn以上の最小び2の累乗数を計算
@@ -105,6 +109,8 @@ namespace tImage {
 
         Fourier2dWorkspace workspace = {};
         Fourier1d block_fourier;
+        Fourier2dWorkspace* workspaces = nullptr;
+        t_uint workspace_count = 0;
         t_bool block_plan_ready = false;
 
         t_uint cols = 0;
@@ -112,8 +118,12 @@ namespace tImage {
         t_uint blockSize = 0;
 
         // ブロック単位の2次元FFT
-        void block_fft(t_uint block_x, t_uint block_y);
-        void block_ifft(t_uint block_x, t_uint block_y);
+        void block_fft(t_uint block_x, t_uint block_y,
+                   Fourier2dWorkspace* _workspace,
+                   Fourier1d* _block_fourier);
+        void block_ifft(t_uint block_x, t_uint block_y,
+                Fourier2dWorkspace* _workspace,
+                Fourier1d* _block_fourier);
 
     public:
         DLL_EXPORT Fourier2d(void);
@@ -132,6 +142,14 @@ namespace tImage {
             Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
             Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
             Fourier2dWorkspace* _workspace
+        );
+
+        // 並列FFT用。_workspaces と各要素のバッファは呼び出し側が確保する。
+        DLL_EXPORT void PrePlan(
+            Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+            Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+            Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
+            Fourier2dWorkspace* _workspaces, t_uint _workspace_count
         );
 
         DLL_EXPORT void fft(void);

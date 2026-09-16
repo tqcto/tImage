@@ -334,10 +334,26 @@ namespace tImage {
         Fourier2dWorkspace* _workspace
     ) {
 
+        this->PrePlan(
+            _fft_src_real, _fft_src_imag,
+            _fft_dst_real, _fft_dst_imag,
+            _ifft_dst_real, _ifft_dst_imag,
+            _workspace, _workspace != nullptr ? 1u : 0u
+        );
+
+    }
+
+    void Fourier2d::PrePlan(
+        Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+        Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+        Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
+        Fourier2dWorkspace* _workspaces, t_uint _workspace_count
+    ) {
+
         this->block_plan_ready = false;
         if (_fft_src_real == nullptr || _fft_src_imag == nullptr ||
             _fft_dst_real == nullptr || _fft_dst_imag == nullptr ||
-            _workspace == nullptr) {
+            _workspaces == nullptr || _workspace_count == 0) {
             return;
         }
 
@@ -354,11 +370,9 @@ namespace tImage {
         this->blockSize = _fft_src_real->align() / sizeof(t_float);
         if (this->blockSize == 0) this->blockSize = 1;
 
-        if (_workspace != nullptr) {
-            this->workspace = *_workspace;
-        } else {
-            this->workspace = {};
-        }
+        this->workspaces = _workspaces;
+        this->workspace_count = _workspace_count;
+        this->workspace = _workspaces[0];
 
         this->block_plan_ready =
             this->cols != 0 && this->rows != 0 &&
@@ -369,24 +383,39 @@ namespace tImage {
             this->cols == _fft_dst_imag->cols() &&
             this->rows == _fft_dst_imag->rows() &&
             (this->cols % this->blockSize) == 0 &&
-            (this->rows % this->blockSize) == 0 &&
-            this->workspace.block_src_real != nullptr &&
-            this->workspace.block_src_imag != nullptr &&
-            this->workspace.block_fft_real != nullptr &&
-            this->workspace.block_fft_imag != nullptr &&
-            this->workspace.rotation_buffer != nullptr &&
-            this->workspace.index_buffer != nullptr;
+            (this->rows % this->blockSize) == 0;
 
-        if (this->block_plan_ready) {
-            this->block_fourier.PrePlan(
+        for (t_uint i = 0; this->block_plan_ready && i < this->workspace_count; ++i) {
+            Fourier2dWorkspace& workspace = this->workspaces[i];
+            Fourier1d* block_fourier = workspace.block_fourier;
+            if (block_fourier == nullptr && this->workspace_count == 1) {
+                block_fourier = &this->block_fourier;
+            }
+
+            this->block_plan_ready =
+                workspace.block_src_real != nullptr &&
+                workspace.block_src_imag != nullptr &&
+                workspace.block_fft_real != nullptr &&
+                workspace.block_fft_imag != nullptr &&
+                workspace.column_src_real != nullptr &&
+                workspace.column_src_imag != nullptr &&
+                workspace.column_fft_real != nullptr &&
+                workspace.column_fft_imag != nullptr &&
+                workspace.rotation_buffer != nullptr &&
+                workspace.index_buffer != nullptr &&
+                block_fourier != nullptr;
+
+            if (!this->block_plan_ready) break;
+
+            block_fourier->PrePlan(
                 this->blockSize,
-                this->workspace.block_src_real,
-                this->workspace.block_src_imag,
-                this->workspace.block_fft_real,
-                this->workspace.block_fft_imag,
+                workspace.block_src_real,
+                workspace.block_src_imag,
+                workspace.block_fft_real,
+                workspace.block_fft_imag,
                 nullptr, nullptr,
-                this->workspace.rotation_buffer,
-                this->workspace.index_buffer
+                workspace.rotation_buffer,
+                workspace.index_buffer
             );
         }
 
@@ -395,7 +424,11 @@ namespace tImage {
     Fourier2d::Fourier2d(void) {
     }
 
-    void Fourier2d::block_fft(t_uint block_x, t_uint block_y) {
+    void Fourier2d::block_fft(
+        t_uint block_x, t_uint block_y,
+        Fourier2dWorkspace* _workspace,
+        Fourier1d* _block_fourier
+    ) {
 
         const t_uint size = this->blockSize;
 
@@ -415,14 +448,14 @@ namespace tImage {
         }
         */
 
-        t_float* block_src_real = this->workspace.block_src_real;
-        t_float* block_src_imag = this->workspace.block_src_imag;
-        t_float* block_fft_real = this->workspace.block_fft_real;
-        t_float* block_fft_imag = this->workspace.block_fft_imag;
-        t_float* column_src_real = this->workspace.column_src_real;
-        t_float* column_src_imag = this->workspace.column_src_imag;
-        t_float* column_fft_real = this->workspace.column_fft_real;
-        t_float* column_fft_imag = this->workspace.column_fft_imag;
+        t_float* block_src_real = _workspace->block_src_real;
+        t_float* block_src_imag = _workspace->block_src_imag;
+        t_float* block_fft_real = _workspace->block_fft_real;
+        t_float* block_fft_imag = _workspace->block_fft_imag;
+        t_float* column_src_real = _workspace->column_src_real;
+        t_float* column_src_imag = _workspace->column_src_imag;
+        t_float* column_fft_real = _workspace->column_fft_real;
+        t_float* column_fft_imag = _workspace->column_fft_imag;
 
         for (t_int y = 0; y < size; ++y) {
             const t_float* src_real = this->fft_src_real->rowPtr(block_y + y) + block_x;
@@ -436,12 +469,12 @@ namespace tImage {
         }
 
         for (t_int y = 0; y < size; ++y) {
-            this->block_fourier.RePlan(
+            _block_fourier->RePlan(
                 &block_src_real[y * size], &block_src_imag[y * size],
                 &block_fft_real[y * size], &block_fft_imag[y * size],
                 nullptr, nullptr
             );
-            this->block_fourier.fft();
+            _block_fourier->fft();
         }
 
         for (t_int x = 0; x < size; ++x) {
@@ -451,12 +484,12 @@ namespace tImage {
                 column_src_imag[y] = block_fft_imag[y * size + x];
             }
 
-            this->block_fourier.RePlan(
+            _block_fourier->RePlan(
                 column_src_real, column_src_imag,
                 column_fft_real, column_fft_imag,
                 nullptr, nullptr
             );
-            this->block_fourier.fft();
+            _block_fourier->fft();
 
             #pragma omp simd
             for (t_int y = 0; y < size; ++y) {
@@ -470,20 +503,41 @@ namespace tImage {
 
         if (this->fft_src_real == nullptr || this->fft_src_imag == nullptr ||
             this->fft_dst_real == nullptr || this->fft_dst_imag == nullptr ||
-            this->blockSize == 0 || this->cols == 0 || this->rows == 0) {
+            this->blockSize == 0 || this->cols == 0 || this->rows == 0 ||
+            !this->block_plan_ready) {
             return;
         }
 
+        if (this->workspace_count == 1) {
+            for (t_int block_y = 0; block_y < this->rows; block_y += this->blockSize) {
+                for (t_int block_x = 0; block_x < this->cols; block_x += this->blockSize) {
+                    Fourier1d* block_fourier = this->workspace.block_fourier;
+                    if (block_fourier == nullptr) block_fourier = &this->block_fourier;
+                    this->block_fft(block_x, block_y, &this->workspace, block_fourier);
+                }
+            }
+            return;
+        }
+
+        #pragma omp parallel for collapse(2) num_threads(this->workspace_count)
         for (t_int block_y = 0; block_y < this->rows; block_y += this->blockSize) {
-            // ここを並列化するためには，各スレッドに個別のメモリを持たせる必要がある
-            // #pragma omp parallel for
             for (t_int block_x = 0; block_x < this->cols; block_x += this->blockSize) {
-                this->block_fft(block_x, block_y);
+                #if defined(_OPENMP)
+                const t_int thread_id = omp_get_thread_num();
+                #else
+                const t_int thread_id = 0;
+                #endif
+                Fourier2dWorkspace* workspace = &this->workspaces[thread_id];
+                this->block_fft(block_x, block_y, workspace, workspace->block_fourier);
             }
         }
     }
 
-    void Fourier2d::block_ifft(t_uint block_x, t_uint block_y) {
+    void Fourier2d::block_ifft(
+        t_uint block_x, t_uint block_y,
+        Fourier2dWorkspace* _workspace,
+        Fourier1d* _block_fourier
+    ) {
 
         const t_uint size = this->blockSize;
 
@@ -502,14 +556,14 @@ namespace tImage {
         }
         */
 
-        t_float* block_src_real = this->workspace.block_src_real;
-        t_float* block_src_imag = this->workspace.block_src_imag;
-        t_float* block_fft_real = this->workspace.block_fft_real;
-        t_float* block_fft_imag = this->workspace.block_fft_imag;
-        t_float* column_src_real = this->workspace.column_src_real;
-        t_float* column_src_imag = this->workspace.column_src_imag;
-        t_float* column_fft_real = this->workspace.column_fft_real;
-        t_float* column_fft_imag = this->workspace.column_fft_imag;
+        t_float* block_src_real = _workspace->block_src_real;
+        t_float* block_src_imag = _workspace->block_src_imag;
+        t_float* block_fft_real = _workspace->block_fft_real;
+        t_float* block_fft_imag = _workspace->block_fft_imag;
+        t_float* column_src_real = _workspace->column_src_real;
+        t_float* column_src_imag = _workspace->column_src_imag;
+        t_float* column_fft_real = _workspace->column_fft_real;
+        t_float* column_fft_imag = _workspace->column_fft_imag;
 
         for (t_uint y = 0; y < size; ++y) {
             const t_float* src_real = this->fft_dst_real->rowPtr(block_y + y) + block_x;
@@ -523,12 +577,12 @@ namespace tImage {
         }
 
         for (t_uint y = 0; y < size; ++y) {
-            this->block_fourier.RePlan(
+            _block_fourier->RePlan(
                 nullptr, nullptr,
                 &block_src_real[y * size], &block_src_imag[y * size],
                 &block_fft_real[y * size], &block_fft_imag[y * size]
             );
-            this->block_fourier.ifft();
+            _block_fourier->ifft();
         }
 
         for (t_uint x = 0; x < size; ++x) {
@@ -538,12 +592,12 @@ namespace tImage {
                 column_src_imag[y] = block_fft_imag[y * size + x];
             }
 
-            this->block_fourier.RePlan(
+            _block_fourier->RePlan(
                 nullptr, nullptr,
                 column_src_real, column_src_imag,
                 column_fft_real, column_fft_imag
             );
-            this->block_fourier.ifft();
+            _block_fourier->ifft();
 
             #pragma omp simd
             for (t_uint y = 0; y < size; ++y) {
@@ -557,13 +611,32 @@ namespace tImage {
 
         if (this->fft_dst_real == nullptr || this->fft_dst_imag == nullptr ||
             this->ifft_dst_real == nullptr || this->ifft_dst_imag == nullptr ||
-            this->blockSize == 0 || this->cols == 0 || this->rows == 0) {
+            this->blockSize == 0 || this->cols == 0 || this->rows == 0 ||
+            !this->block_plan_ready) {
             return;
         }
 
-        for (t_uint block_y = 0; block_y < this->rows; block_y += this->blockSize) {
-            for (t_uint block_x = 0; block_x < this->cols; block_x += this->blockSize) {
-                this->block_ifft(block_x, block_y);
+        if (this->workspace_count == 1) {
+            for (t_uint block_y = 0; block_y < this->rows; block_y += this->blockSize) {
+                for (t_uint block_x = 0; block_x < this->cols; block_x += this->blockSize) {
+                    Fourier1d* block_fourier = this->workspace.block_fourier;
+                    if (block_fourier == nullptr) block_fourier = &this->block_fourier;
+                    this->block_ifft(block_x, block_y, &this->workspace, block_fourier);
+                }
+            }
+            return;
+        }
+
+        #pragma omp parallel for collapse(2) num_threads(this->workspace_count)
+        for (t_int block_y = 0; block_y < this->rows; block_y += this->blockSize) {
+            for (t_int block_x = 0; block_x < this->cols; block_x += this->blockSize) {
+                #if defined(_OPENMP)
+                const t_uint thread_id = static_cast<t_uint>(omp_get_thread_num());
+                #else
+                const t_uint thread_id = 0;
+                #endif
+                Fourier2dWorkspace* workspace = &this->workspaces[thread_id];
+                this->block_ifft(block_x, block_y, workspace, workspace->block_fourier);
             }
         }
     }
