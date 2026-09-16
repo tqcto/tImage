@@ -427,6 +427,7 @@ namespace tImage {
             const t_float* src_real = this->fft_src_real->rowPtr(block_y + y) + block_x;
             const t_float* src_imag = this->fft_src_imag->rowPtr(block_y + y) + block_x;
 
+            #pragma omp simd
             for (t_int x = 0; x < size; ++x) {
                 block_src_real[y * size + x] = src_real[x];
                 block_src_imag[y * size + x] = src_imag[x];
@@ -443,6 +444,7 @@ namespace tImage {
         }
 
         for (t_int x = 0; x < size; ++x) {
+            #pragma omp simd
             for (t_int y = 0; y < size; ++y) {
                 column_src_real[y] = block_fft_real[y * size + x];
                 column_src_imag[y] = block_fft_imag[y * size + x];
@@ -455,6 +457,7 @@ namespace tImage {
             );
             this->block_fourier.fft();
 
+            #pragma omp simd
             for (t_int y = 0; y < size; ++y) {
                 this->fft_dst_real->rowPtr(block_y + y)[block_x + x] = column_fft_real[y];
                 this->fft_dst_imag->rowPtr(block_y + y)[block_x + x] = column_fft_imag[y];
@@ -509,6 +512,7 @@ namespace tImage {
             const t_float* src_real = this->fft_dst_real->rowPtr(block_y + y) + block_x;
             const t_float* src_imag = this->fft_dst_imag->rowPtr(block_y + y) + block_x;
 
+            #pragma omp simd
             for (t_uint x = 0; x < size; ++x) {
                 block_src_real[y * size + x] = src_real[x];
                 block_src_imag[y * size + x] = src_imag[x];
@@ -525,6 +529,7 @@ namespace tImage {
         }
 
         for (t_uint x = 0; x < size; ++x) {
+            #pragma omp simd
             for (t_uint y = 0; y < size; ++y) {
                 column_src_real[y] = block_fft_real[y * size + x];
                 column_src_imag[y] = block_fft_imag[y * size + x];
@@ -537,6 +542,7 @@ namespace tImage {
             );
             this->block_fourier.ifft();
 
+            #pragma omp simd
             for (t_uint y = 0; y < size; ++y) {
                 this->ifft_dst_real->rowPtr(block_y + y)[block_x + x] = column_fft_real[y];
                 this->ifft_dst_imag->rowPtr(block_y + y)[block_x + x] = column_fft_imag[y];
