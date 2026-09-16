@@ -86,6 +86,7 @@ namespace tImage {
 
         }
 
+        #pragma omp simd
         for (t_int i = 0; i < this->N; i++) {
 
             this->rev_table[i] = reverseIndex(i, this->M);
@@ -474,6 +475,8 @@ namespace tImage {
         }
 
         for (t_int block_y = 0; block_y < this->rows; block_y += this->blockSize) {
+            // ここを並列化するためには，各スレッドに個別のメモリを持たせる必要がある
+            // #pragma omp parallel for
             for (t_int block_x = 0; block_x < this->cols; block_x += this->blockSize) {
                 this->block_fft(block_x, block_y);
             }
