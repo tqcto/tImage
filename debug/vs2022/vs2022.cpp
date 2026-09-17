@@ -252,7 +252,7 @@ void test_transpose(void) {
 
 }
 
-void test_Fourier2d(void) {
+void test_Fourier2dBlock(void) {
 
 	const t_uint cols = 3840;
 	const t_uint rows = 2160;
@@ -294,7 +294,7 @@ void test_Fourier2d(void) {
 	ws.rotation_buffer = (t_float*)malloc(sizeof(t_float) * block_size);
 	ws.index_buffer = (t_int*)malloc(sizeof(t_int) * block_size);
 
-	Fourier2d fourier;
+	Fourier2dBlock fourier;
 	fourier.PrePlan(&src_real, &src_imag, &dst_real, &dst_imag, &ifft_real, &ifft_imag, &ws);
 	fourier.fft();
 
@@ -357,7 +357,7 @@ int main(void) {
 	//test_Fourier1d();
 
 	// test_transpose();
-	test_Fourier2d();
+	test_Fourier2dBlock();
 	
     Image src;
     decodePNG(&src, IMG_PATH);

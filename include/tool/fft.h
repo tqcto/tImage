@@ -11,7 +11,7 @@ namespace tImage {
         t_float *real, *imag;
     } ComplexMems;
 
-    // Fourier2d が使用する外部ワークスペース
+    // Fourier2dBlock が使用する外部ワークスペース
     // block_* 配列のサイズは blockSize * blockSize、column_*、rotation_buffer、
     // index_buffer のサイズは blockSize。block_fourier も呼び出し側が管理する。
     typedef struct {
@@ -99,7 +99,7 @@ namespace tImage {
 
     };
 
-    class Fourier2d {
+    class Fourier2dBlock {
 
     private:
 
@@ -126,7 +126,7 @@ namespace tImage {
                 Fourier1d* _block_fourier);
 
     public:
-        DLL_EXPORT Fourier2d(void);
+        DLL_EXPORT Fourier2dBlock(void);
 
         // データサイズの指定と，FFT及びIFFTの入力・出力複素行列メモリ，一時メモリの指定
         // 行列の各行・各列は2の累乗数である必要がある

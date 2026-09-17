@@ -327,7 +327,7 @@ namespace tImage {
     }
     */
 
-    void Fourier2d::PrePlan(
+    void Fourier2dBlock::PrePlan(
         Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
         Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
         Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
@@ -343,7 +343,7 @@ namespace tImage {
 
     }
 
-    void Fourier2d::PrePlan(
+    void Fourier2dBlock::PrePlan(
         Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
         Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
         Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
@@ -421,10 +421,10 @@ namespace tImage {
 
     }
 
-    Fourier2d::Fourier2d(void) {
+    Fourier2dBlock::Fourier2dBlock(void) {
     }
 
-    void Fourier2d::block_fft(
+    void Fourier2dBlock::block_fft(
         t_uint block_x, t_uint block_y,
         Fourier2dWorkspace* _workspace,
         Fourier1d* _block_fourier
@@ -499,7 +499,7 @@ namespace tImage {
         }
     }
 
-    void Fourier2d::fft(void) {
+    void Fourier2dBlock::fft(void) {
 
         if (this->fft_src_real == nullptr || this->fft_src_imag == nullptr ||
             this->fft_dst_real == nullptr || this->fft_dst_imag == nullptr ||
@@ -533,7 +533,7 @@ namespace tImage {
         }
     }
 
-    void Fourier2d::block_ifft(
+    void Fourier2dBlock::block_ifft(
         t_uint block_x, t_uint block_y,
         Fourier2dWorkspace* _workspace,
         Fourier1d* _block_fourier
@@ -607,7 +607,7 @@ namespace tImage {
         }
     }
 
-    void Fourier2d::ifft(void) {
+    void Fourier2dBlock::ifft(void) {
 
         if (this->fft_dst_real == nullptr || this->fft_dst_imag == nullptr ||
             this->ifft_dst_real == nullptr || this->ifft_dst_imag == nullptr ||
