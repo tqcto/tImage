@@ -730,25 +730,37 @@ namespace tImage {
         this->vertical_index = this->horizon_index + this->vertical_buffer_size * sizeof(t_float);
         */
 
-        this->horizon_index = reinterpret_cast<t_int*>(buffer);
-        this->vertical_index = this->horizon_index + this->horizon_index_buffer_size;
-        this->horizon_rot = reinterpret_cast<t_float*>(this->vertical_index) + this->vertical_index_buffer_size;
-        this->vertical_rot = this->horizon_rot + this->horizon_rot_buffer_size;
+        auto* cursor = reinterpret_cast<t_uchar*>(buffer);
+
+        this->horizon_index = reinterpret_cast<t_int*>(cursor);
+        cursor += this->horizon_index_buffer_size;
+
+        this->vertical_index = reinterpret_cast<t_int*>(cursor);
+        cursor += this->vertical_index_buffer_size;
+
+        this->horizon_rot = reinterpret_cast<t_float*>(cursor);
+        cursor += this->horizon_rot_buffer_size;
+
+        this->vertical_rot = reinterpret_cast<t_float*>(cursor);
+        cursor += this->vertical_rot_buffer_size;
 
         this->tmp_transpose_real.input(
-            this->vertical_rot + this->vertical_rot_buffer_size,
-            this->fft_src_real->rows(), this->fft_src_real->cols() + 1,
+            reinterpret_cast<t_float*>(cursor),
+            this->fft_src_real->rows(), this->fft_src_real->cols(),
             this->fft_src_real->align()
         );
+
+        cursor += this->tmp_transpose_buffer_size;
+
         this->tmp_transpose_imag.input(
-            this->tmp_transpose_real.data + this->tmp_transpose_buffer_size,
-            this->fft_src_real->rows(), this->fft_src_real->cols() + 1,
+            reinterpret_cast<t_float*>(cursor),
+            this->fft_src_real->rows(), this->fft_src_real->cols(),
             this->fft_src_real->align()
         );
 
         // 計算用に一行空ける
-        t_float* tmp_real = this->tmp_transpose_real.data + this->tmp_transpose_real.stride();
-        t_float* tmp_imag = this->tmp_transpose_imag.data + this->tmp_transpose_imag.stride();
+        t_float* tmp_real = this->tmp_transpose_real.data + this->tmp_transpose_real.elementsRow();
+        t_float* tmp_imag = this->tmp_transpose_imag.data + this->tmp_transpose_imag.elementsRow();
 
         this->f_horizon.PrePlan(
             this->fft_src_real->elementsRow(),
@@ -776,7 +788,7 @@ namespace tImage {
         const t_int rows = this->fft_src_real->rows();
 
         // 各行にFFT
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for (t_int y = 0; y < rows; y++) {
             this->f_horizon.RePlan(
                 this->fft_src_real->rowPtr(y), this->fft_src_imag->rowPtr(y),
@@ -787,19 +799,19 @@ namespace tImage {
         }
 
         // 計算用に一行空ける
-        this->tmp_transpose_real.data += this->tmp_transpose_real.stride();
-        this->tmp_transpose_imag.data += this->tmp_transpose_imag.stride();
+        this->tmp_transpose_real.data += this->tmp_transpose_real.elementsRow();
+        this->tmp_transpose_imag.data += this->tmp_transpose_imag.elementsRow();
         // 転置
         transpose(
             this->fft_dst_real, this->fft_dst_imag,
             &this->tmp_transpose_real, &this->tmp_transpose_imag
         );
         // 戻す
-        this->tmp_transpose_real.data -= this->tmp_transpose_real.stride();
-        this->tmp_transpose_imag.data -= this->tmp_transpose_imag.stride();
+        this->tmp_transpose_real.data -= this->tmp_transpose_real.elementsRow();
+        this->tmp_transpose_imag.data -= this->tmp_transpose_imag.elementsRow();
 
         // 各列にFFT
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for (t_int y = 0; y < cols; y++) {
             this->f_vertical.RePlan(
                 this->tmp_transpose_real.rowPtr(y + 1), this->tmp_transpose_imag.rowPtr(y + 1),
@@ -823,19 +835,19 @@ namespace tImage {
         const t_int rows = this->fft_src_real->rows();
 
         // 計算用に一行開けた分を足す
-        this->tmp_transpose_real.data += this->tmp_transpose_real.stride();
-        this->tmp_transpose_imag.data += this->tmp_transpose_imag.stride();
+        this->tmp_transpose_real.data += this->tmp_transpose_real.elementsRow();
+        this->tmp_transpose_imag.data += this->tmp_transpose_imag.elementsRow();
         // 転置
         transpose(
             this->fft_dst_real, this->fft_dst_imag,
             &this->tmp_transpose_real, &this->tmp_transpose_imag
         );
         // 戻す
-        this->tmp_transpose_real.data -= this->tmp_transpose_real.stride();
-        this->tmp_transpose_imag.data -= this->tmp_transpose_imag.stride();
+        this->tmp_transpose_real.data -= this->tmp_transpose_real.elementsRow();
+        this->tmp_transpose_imag.data -= this->tmp_transpose_imag.elementsRow();
 
         // 各列にIFFT
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for (t_int y = 0; y < cols; y++) {
             this->f_vertical.RePlan(
                 nullptr, nullptr,
@@ -852,7 +864,7 @@ namespace tImage {
         );
 
         // 各行にFFT
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for (t_int y = 0; y < rows; y++) {
             this->f_horizon.RePlan(
                 nullptr, nullptr,

@@ -364,15 +364,17 @@ void test_Fourier2d(void) {
 	Matrix<t_float> ifft_real(padded_cols, padded_rows);
 	Matrix<t_float> ifft_imag(padded_cols, padded_rows);
 
+	printf("elements row:%d, col:%d\n", src_real.elementsRow(), src_real.rows());
+
 	printf("source matrix:\n");
 	// /*
 	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = src_real.rowPtr(y);
 		for (t_int x = 0; x < padded_cols; x++) {
 
-			rowptr[x] = (x < cols && y < rows) ? x + y * cols : 0.0f;
+			rowptr[x] = static_cast<t_float>(x + y * cols);
 			src_imag.rowPtr(y)[x] = 0.0f;
-			if (x < cols && y < rows) printf("%f ", rowptr[x]);
+			printf("%f ", rowptr[x]);
 
 		}
 		printf("\n");
@@ -392,9 +394,9 @@ void test_Fourier2d(void) {
 	fourier.fft();
 
 	printf("transformed real:\n");
-	for (t_int y = 0; y < rows; y++) {
+	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = dst_real.rowPtr(y);
-		for (t_int x = 0; x < cols; x++) {
+		for (t_int x = 0; x < padded_cols; x++) {
 
 			printf("%f ", rowptr[x]);
 
@@ -403,9 +405,9 @@ void test_Fourier2d(void) {
 	}
 
 	printf("transformed imag:\n");
-	for (t_int y = 0; y < rows; y++) {
+	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = dst_imag.rowPtr(y);
-		for (t_int x = 0; x < cols; x++) {
+		for (t_int x = 0; x < padded_cols; x++) {
 
 			printf("%f ", rowptr[x]);
 
@@ -416,9 +418,9 @@ void test_Fourier2d(void) {
 	fourier.ifft();
 
 	printf("inverse transformed real:\n");
-	for (t_int y = 0; y < rows; y++) {
+	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = ifft_real.rowPtr(y);
-		for (t_int x = 0; x < cols; x++) {
+		for (t_int x = 0; x < padded_cols; x++) {
 
 			printf("%f ", rowptr[x]);
 
