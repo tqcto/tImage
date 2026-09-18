@@ -9,7 +9,7 @@
 
 using namespace tImage;
 
-#define _PRE
+//#define _PRE
 
 #ifdef _PRE
 #define PRE_LOG	printf
@@ -351,8 +351,8 @@ void test_Fourier2dBlock(void) {
 
 void test_Fourier2d(void) {
 
-	const t_uint cols = 10;
-	const t_uint rows = 10;
+	const t_uint cols = 1920;
+	const t_uint rows = 1080;
 	
 	const t_uint padded_cols = calc_padding(cols);
 	const t_uint padded_rows = calc_padding(rows);
@@ -374,7 +374,7 @@ void test_Fourier2d(void) {
 
 			rowptr[x] = static_cast<t_float>(x + y * cols);
 			src_imag.rowPtr(y)[x] = 0.0f;
-			printf("%f ", rowptr[x]);
+			PRE_LOG("%f ", rowptr[x]);
 
 		}
 		printf("\n");
@@ -389,11 +389,13 @@ void test_Fourier2d(void) {
 	);
 	printf("buffer size:%u\n", size);
 	void* buffer = malloc(size);
+	printf("buffer : %p\n", buffer);
 	fourier.Setup(buffer);
 
 	fourier.fft();
 
 	printf("transformed real:\n");
+	#ifdef _PRE
 	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = dst_real.rowPtr(y);
 		for (t_int x = 0; x < padded_cols; x++) {
@@ -403,8 +405,10 @@ void test_Fourier2d(void) {
 		}
 		printf("\n");
 	}
+	#endif
 
 	printf("transformed imag:\n");
+	#ifdef _PRE
 	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = dst_imag.rowPtr(y);
 		for (t_int x = 0; x < padded_cols; x++) {
@@ -414,10 +418,12 @@ void test_Fourier2d(void) {
 		}
 		printf("\n");
 	}
+	#endif
 
 	fourier.ifft();
 
 	printf("inverse transformed real:\n");
+	#ifdef _PRE
 	for (t_int y = 0; y < padded_rows; y++) {
 		auto rowptr = ifft_real.rowPtr(y);
 		for (t_int x = 0; x < padded_cols; x++) {
@@ -427,6 +433,7 @@ void test_Fourier2d(void) {
 		}
 		printf("\n");
 	}
+	#endif
 
 	free(buffer);
 
