@@ -1,6 +1,6 @@
 #pragma once
 
-#include "..\tImage_definition.h"
+#include "../tImage_definition.h"
 
 #include <stdio.h>
 
@@ -9,7 +9,7 @@ namespace tImage {
 	typedef struct {
 		t_uint width;
 		t_uint height;
-		t_uint stride;
+		t_uint64 stride;
 		t_uint channels;
 		t_uint depth;
 	}t_ImageFile_Header;

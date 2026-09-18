@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 #include <assert.h> // for assert
+#if defined(__AVX2__)
 #include <immintrin.h>
+#endif
 
 namespace tImage {
 
@@ -271,6 +273,7 @@ namespace tImage {
 		}
 
 		// AVX2: swap R and B in 32-bit lanes:
+		#if defined(__AVX2__)
 		// swapped = (val & 0xFF00FF00) | ((val & 0x000000FF) << 16) | ((val & 0x00FF0000) >> 16)
 		const __m256i m_keep = _mm256_set1_epi32(0xFF00FF00u);
 		const __m256i m_r    = _mm256_set1_epi32(0x000000FFu);
@@ -292,6 +295,12 @@ namespace tImage {
 		for (; i < pixels; ++i) {
 			tmp[i] = _RGB2BGR(tmp[i]);
 		}
+		#else
+		for (t_uint64 i = 0; i < pixels; ++i) {
+			t_uint value = tmp[i];
+			tmp[i] = _RGB2BGR(value);
+		}
+		#endif
 
 		// pack back: 32bit -> RGB24
 		for (t_uint64 j = 0; j < pixels; ++j) {
@@ -313,6 +322,7 @@ namespace tImage {
 		if (this->depthByte() != 1) return t_err_MemoryAccessFailed;
 
 		// mask
+		#if defined(__AVX2__)
 		const __m256i m_keep = _mm256_set1_epi32(0xFF00FF00u); // keep G and A
 		const __m256i m_r    = _mm256_set1_epi32(0x000000FFu);
 		const __m256i m_b    = _mm256_set1_epi32(0x00FF0000u);
@@ -331,6 +341,17 @@ namespace tImage {
 			_mm256_storeu_si256((__m256i*)(this->data + i * 4), v);
 
 		}
+		#else
+		const t_uint64 pixels = (t_uint64)this->_cols * this->_rows;
+		for (t_uint64 i = 0; i < pixels; ++i) {
+			t_uchar* pixel = this->data + i * 4;
+			t_uchar red = pixel[0];
+			pixel[0] = pixel[2];
+			pixel[2] = red;
+		}
+		#endif
+
+		return t_err_None;
 
 	}
 

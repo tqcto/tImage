@@ -1,16 +1,39 @@
 #pragma once
 
-#include "..\tImage_definition.h"
-#include "..\image\Image.h"
+#include "../tImage_definition.h"
+#include "../image/Image.h"
 
 namespace tImage {
+
+    class Fourier1d;
 
     typedef struct {
         t_float *real, *imag;
     } ComplexMems;
 
+    // Fourier2dBlock が使用する外部ワークスペース
+    // block_* 配列のサイズは blockSize * blockSize、column_*、rotation_buffer、
+    // index_buffer のサイズは blockSize。block_fourier も呼び出し側が管理する。
+    typedef struct {
+        t_float* block_src_real;
+        t_float* block_src_imag;
+        t_float* block_fft_real;
+        t_float* block_fft_imag;
+        t_float* column_src_real;
+        t_float* column_src_imag;
+        t_float* column_fft_real;
+        t_float* column_fft_imag;
+        t_float* rotation_buffer;
+        t_int* index_buffer;
+        // 並列APIではワークスペースごとに別のFourier1dを指定する。
+        Fourier1d* block_fourier;
+    } Fourier2dWorkspace;
+
     // FFT用にn以上の最小び2の累乗数を計算
-    DLL_EXPORT t_uint calc_paddinhg(t_uint n);
+    DLL_EXPORT t_uint calc_padding(t_uint n);
+
+    // n以上でblockSizeの倍数となるサイズを計算
+    DLL_EXPORT t_uint calcPaddedSize(t_uint n, t_uint blockSize);
 
     // 1次元FFT/IFFTクラス
     class Fourier1d {
@@ -53,6 +76,18 @@ namespace tImage {
             t_float* _rot_buffer, t_int* _index_buffer
         );
 
+        // FFT及びIFFTの入力・出力複素数メモリの再指定
+        // この関数により再指定する場合，事前計算済みであることを前提とする
+        // _fft_src_real, _fft_src_imag : FFT用入力データ列
+        // _fft_dst_real, _fft_dst_imag : FFT用出力データ列
+        // _ifft_src_real, _ifft_src_imag : IFFT用入力データ列
+        // _ifft_dst_real, _ifft_dst_imag : IFFT用出力データ列
+        DLL_EXPORT void RePlan(
+            t_float* _fft_src_real, t_float* _fft_src_imag,
+            t_float* _fft_dst_real, t_float* _fft_dst_imag,
+            t_float* _ifft_dst_real, t_float* _ifft_dst_imag
+        );
+
         DLL_EXPORT void fft(void);
         DLL_EXPORT void ifft(void);
 
@@ -61,6 +96,121 @@ namespace tImage {
         DLL_EXPORT void dft(void);
         DLL_EXPORT void idft(void);
         */
+
+    };
+
+    class Fourier2dBlock {
+
+    private:
+
+        Matrix<t_float> *fft_src_real, *fft_src_imag;
+        Matrix<t_float> *fft_dst_real, *fft_dst_imag;
+        Matrix<t_float> *ifft_dst_real, *ifft_dst_imag;
+
+        Fourier2dWorkspace workspace = {};
+        Fourier1d block_fourier;
+        Fourier2dWorkspace* workspaces = nullptr;
+        t_uint workspace_count = 0;
+        t_bool block_plan_ready = false;
+
+        t_uint cols = 0;
+        t_uint rows = 0;
+        t_uint blockSize = 0;
+
+        // ブロック単位の2次元FFT
+        void block_fft(t_uint block_x, t_uint block_y,
+                   Fourier2dWorkspace* _workspace,
+                   Fourier1d* _block_fourier);
+        void block_ifft(t_uint block_x, t_uint block_y,
+                Fourier2dWorkspace* _workspace,
+                Fourier1d* _block_fourier);
+
+    public:
+        DLL_EXPORT Fourier2dBlock(void);
+
+        // データサイズの指定と，FFT及びIFFTの入力・出力複素行列メモリ，一時メモリの指定
+        // 行列の各行・各列は2の累乗数である必要がある
+        // また，すべての行列のalignが同じ値である必要がある
+        // _fft_src_real, _fft_src_imag : FFT用入力行列
+        // _fft_dst_real, _fft_dst_imag : FFT用出力行列
+        // _ifft_src_real, _ifft_src_imag : IFFT用入力行列
+        // _ifft_dst_real, _ifft_dst_imag : IFFT用出力行列
+        // blockSize は align / sizeof(t_float)。block 配列は blockSize * blockSize 要素、
+        // その他の配列は blockSize 要素。
+        DLL_EXPORT void PrePlan(
+            Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+            Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+            Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
+            Fourier2dWorkspace* _workspace
+        );
+
+        // 並列FFT用。_workspaces と各要素のバッファは呼び出し側が確保する。
+        DLL_EXPORT void PrePlan(
+            Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+            Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+            Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
+            Fourier2dWorkspace* _workspaces, t_uint _workspace_count
+        );
+
+        DLL_EXPORT void fft(void);
+        DLL_EXPORT void ifft(void);
+
+    };
+
+    class Fourier2d {
+
+    private:
+
+        Matrix<t_float>* fft_src_real = nullptr;
+        Matrix<t_float>* fft_src_imag = nullptr;
+        Matrix<t_float>* fft_dst_real = nullptr;
+        Matrix<t_float>* fft_dst_imag = nullptr;
+        Matrix<t_float>* ifft_dst_real = nullptr;
+        Matrix<t_float>* ifft_dst_imag = nullptr;
+
+        // 横方向の回転因子バッファサイズ
+        t_uint64 horizon_rot_buffer_size = 0;
+        // 横方向のビット反転用インデックステーブル用バッファサイズ
+        t_uint64 horizon_index_buffer_size = 0;
+        // 縦方向の回転因子作業用バッファサイズ
+        t_uint64 vertical_rot_buffer_size = 0;
+        // 縦方向のビット反転用インデックステーブル用バッファサイズ
+        t_uint64 vertical_index_buffer_size = 0;
+
+        // 各転置用バッファサイズ
+        t_uint64 tmp_transpose_buffer_size = 0;
+
+        // 横方向の作業用バッファ
+        t_float* horizon_rot = nullptr;
+        t_int* horizon_index = nullptr;
+        // 縦方向の作業用バッファ
+        t_float* vertical_rot = nullptr;
+        t_int* vertical_index = nullptr;
+
+        // 転置用バッファ
+        Matrix<t_float> tmp_transpose_real;
+        Matrix<t_float> tmp_transpose_imag;
+
+        // 各方向用の一次元FFT
+        Fourier1d f_horizon, f_vertical;
+
+    public:
+
+        DLL_EXPORT Fourier2d(void);
+
+        // 必要なメモリを計算
+        DLL_EXPORT t_uint64 PreSetup(
+            Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+            Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+            Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag
+            //,Matrix<t_float>* _tmp_transpose_real, Matrix<t_float>* _tmp_transpose_imag
+        );
+        // 変換準備
+        // buffer : PreSetupで計算したサイズのメモリアドレス
+        DLL_EXPORT t_err Setup(void* buffer);
+
+        DLL_EXPORT void fft(void);
+        DLL_EXPORT void ifft(void);
 
     };
 
