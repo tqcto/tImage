@@ -22,7 +22,7 @@ void test_Fourier1d(void) {
 	//const t_uint N = 1920 * 1080 * 3;
 	//const t_uint N = 1920 * 3;
 	const t_uint N = 10;
-	t_uint paddedN = calc_paddinhg(N);
+	t_uint paddedN = calc_padding(N);
 	
 	printf("source data:\n");
 	t_float* src_real = (t_float*)malloc(sizeof(t_float) * paddedN);
@@ -95,7 +95,7 @@ void test_fft(void) {
 
 	//const t_uint N = 1920 * 1080 * 3;
 	const t_uint N = 1920 * 3;
-	t_uint paddedN = calc_paddinhg(N);
+	t_uint paddedN = calc_padding(N);
 	
 	printf("source data:\n");
 	t_float* src_real = (t_float*)malloc(sizeof(t_float) * paddedN);
@@ -349,6 +349,87 @@ void test_Fourier2dBlock(void) {
 
 }
 
+void test_Fourier2d(void) {
+
+	const t_uint cols = 10;
+	const t_uint rows = 10;
+	
+	const t_uint padded_cols = calc_padding(cols);
+	const t_uint padded_rows = calc_padding(rows);
+
+	Matrix<t_float> src_real(padded_cols, padded_rows);
+	Matrix<t_float> src_imag(padded_cols, padded_rows);
+	Matrix<t_float> dst_real(padded_cols, padded_rows);
+	Matrix<t_float> dst_imag(padded_cols, padded_rows);
+	Matrix<t_float> ifft_real(padded_cols, padded_rows);
+	Matrix<t_float> ifft_imag(padded_cols, padded_rows);
+
+	printf("source matrix:\n");
+	// /*
+	for (t_int y = 0; y < padded_rows; y++) {
+		auto rowptr = src_real.rowPtr(y);
+		for (t_int x = 0; x < padded_cols; x++) {
+
+			rowptr[x] = (x < cols && y < rows) ? x + y * cols : 0.0f;
+			src_imag.rowPtr(y)[x] = 0.0f;
+			if (x < cols && y < rows) printf("%f ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+	// */
+
+	Fourier2d fourier;
+	t_uint64 size = fourier.PreSetup(
+		&src_real, &src_imag,
+		&dst_real, &dst_imag,
+		&ifft_real, &ifft_imag
+	);
+	printf("buffer size:%u\n", size);
+	void* buffer = malloc(size);
+	fourier.Setup(buffer);
+
+	fourier.fft();
+
+	printf("transformed real:\n");
+	for (t_int y = 0; y < rows; y++) {
+		auto rowptr = dst_real.rowPtr(y);
+		for (t_int x = 0; x < cols; x++) {
+
+			printf("%f ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+
+	printf("transformed imag:\n");
+	for (t_int y = 0; y < rows; y++) {
+		auto rowptr = dst_imag.rowPtr(y);
+		for (t_int x = 0; x < cols; x++) {
+
+			printf("%f ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+
+	fourier.ifft();
+
+	printf("inverse transformed real:\n");
+	for (t_int y = 0; y < rows; y++) {
+		auto rowptr = ifft_real.rowPtr(y);
+		for (t_int x = 0; x < cols; x++) {
+
+			printf("%f ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+
+	free(buffer);
+
+}
+
 int main(void) {
 
 	//test_Matrix();
@@ -357,8 +438,10 @@ int main(void) {
 	//test_Fourier1d();
 
 	// test_transpose();
-	test_Fourier2dBlock();
-	
+	// test_Fourier2dBlock();
+
+	test_Fourier2d();
+
     Image src;
     decodePNG(&src, IMG_PATH);
 

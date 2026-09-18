@@ -30,7 +30,7 @@ namespace tImage {
     } Fourier2dWorkspace;
 
     // FFT用にn以上の最小び2の累乗数を計算
-    DLL_EXPORT t_uint calc_paddinhg(t_uint n);
+    DLL_EXPORT t_uint calc_padding(t_uint n);
 
     // n以上でblockSizeの倍数となるサイズを計算
     DLL_EXPORT t_uint calcPaddedSize(t_uint n, t_uint blockSize);
@@ -151,6 +151,63 @@ namespace tImage {
             Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
             Fourier2dWorkspace* _workspaces, t_uint _workspace_count
         );
+
+        DLL_EXPORT void fft(void);
+        DLL_EXPORT void ifft(void);
+
+    };
+
+    class Fourier2d {
+
+    private:
+
+        Matrix<t_float>* fft_src_real = nullptr;
+        Matrix<t_float>* fft_src_imag = nullptr;
+        Matrix<t_float>* fft_dst_real = nullptr;
+        Matrix<t_float>* fft_dst_imag = nullptr;
+        Matrix<t_float>* ifft_dst_real = nullptr;
+        Matrix<t_float>* ifft_dst_imag = nullptr;
+
+        // 横方向の回転因子バッファサイズ
+        t_uint64 horizon_rot_buffer_size = 0;
+        // 横方向のビット反転用インデックステーブル用バッファサイズ
+        t_uint64 horizon_index_buffer_size = 0;
+        // 縦方向の回転因子作業用バッファサイズ
+        t_uint64 vertical_rot_buffer_size = 0;
+        // 縦方向のビット反転用インデックステーブル用バッファサイズ
+        t_uint64 vertical_index_buffer_size = 0;
+
+        // 各転置用バッファサイズ
+        t_uint64 tmp_transpose_buffer_size = 0;
+
+        // 横方向の作業用バッファ
+        t_float* horizon_rot = nullptr;
+        t_int* horizon_index = nullptr;
+        // 縦方向の作業用バッファ
+        t_float* vertical_rot = nullptr;
+        t_int* vertical_index = nullptr;
+
+        // 転置用バッファ
+        Matrix<t_float> tmp_transpose_real;
+        Matrix<t_float> tmp_transpose_imag;
+
+        // 各方向用の一次元FFT
+        Fourier1d f_horizon, f_vertical;
+
+    public:
+
+        DLL_EXPORT Fourier2d(void);
+
+        // 必要なメモリを計算
+        DLL_EXPORT t_uint64 PreSetup(
+            Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+            Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+            Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag
+            //,Matrix<t_float>* _tmp_transpose_real, Matrix<t_float>* _tmp_transpose_imag
+        );
+        // 変換準備
+        // buffer : PreSetupで計算したサイズのメモリアドレス
+        DLL_EXPORT t_err Setup(void* buffer);
 
         DLL_EXPORT void fft(void);
         DLL_EXPORT void ifft(void);

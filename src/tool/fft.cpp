@@ -43,7 +43,7 @@ namespace tImage {
 
     }
 
-    t_uint calc_paddinhg(t_uint n) {
+    t_uint calc_padding(t_uint n) {
 
         //t_uint ceilN = std::bit_ceil(n); // C++20
         t_uint floorN = bit_floor(n);
@@ -639,6 +639,229 @@ namespace tImage {
                 this->block_ifft(block_x, block_y, workspace, workspace->block_fourier);
             }
         }
+    }
+
+    Fourier2d::Fourier2d(void) {
+
+
+        
+    }
+
+    t_uint64 Fourier2d::PreSetup(
+        Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
+        Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
+        Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag
+        //, Matrix<t_float>* _tmp_transpose_real, Matrix<t_float>* _tmp_transpose_imag
+    ) {
+
+        // 入出力メモリ
+        this->fft_src_real = _fft_src_real;
+        this->fft_src_imag = _fft_src_imag;
+        
+        this->fft_dst_real = _fft_dst_real;
+        this->fft_dst_imag = _fft_dst_imag;
+
+        this->ifft_dst_real = _ifft_dst_real;
+        this->ifft_dst_imag = _ifft_dst_imag;
+
+        /*
+        // 転置用バッファ
+        this->tmp_transpose_real = _tmp_transpose_real;
+        this->tmp_transpose_imag = _tmp_transpose_imag;
+        */
+
+        /*
+        // 横方向の各作業用バッファサイズ
+        this->horizon_buffer_size = this->fft_src_real->stride();
+        // 縦方向の各作業用バッファサイズ
+        this->vertical_buffer_size = calcStride4Matrix(
+            this->fft_src_real->rows(),
+            sizeof(t_float),
+            this->fft_src_real->align()
+        );
+
+        return (this->horizon_buffer_size + this->vertical_buffer_size) << 1;
+        */
+
+        constexpr t_uint64 size_div = sizeof(t_int) / sizeof(t_float);
+        
+        // 横方向の回転因子用バッファサイズの計算
+        this->horizon_rot_buffer_size = this->fft_src_real->stride();
+        
+        // 横方向のビット反転用インデックステーブル用バッファサイズの計算
+        this->horizon_index_buffer_size = this->horizon_rot_buffer_size * size_div;
+        
+        // 縦方向の回転因子用バッファサイズの計算
+        this->vertical_rot_buffer_size = calcStride4Matrix(
+            this->fft_src_real->rows(),
+            sizeof(t_float),
+            this->fft_src_real->align()
+        );
+
+        // 縦方向のビット反転用インデックステーブル用バッファサイズの計算
+        this->vertical_index_buffer_size = calcStride4Matrix(
+            this->fft_src_real->rows(),
+            sizeof(t_int),
+            this->fft_src_real->align()
+        );
+
+        // 転置用行列バッファサイズの計算
+        // ストライドを計算
+        const t_uint64 tmp_stride = calcStride4Matrix(
+            this->fft_src_real->rows(), sizeof(t_float), this->fft_src_real->align()
+        );
+        // 計算用に1行多めにメモリをとる
+        this->tmp_transpose_buffer_size = tmp_stride * ( this->fft_src_real->cols() + 1 );
+
+        return this->horizon_rot_buffer_size + this->horizon_index_buffer_size
+         + this->vertical_rot_buffer_size + this->vertical_index_buffer_size
+         + (this->tmp_transpose_buffer_size << 1);
+
+    }
+
+    t_err Fourier2d::Setup(void* buffer) {
+
+        // 各作業用バッファのメモリ割り当て
+        
+        /*
+        this->horizon_rot = reinterpret_cast<t_float*>(buffer);
+        this->vertical_rot = this->horizon_rot + this->vertical_buffer_size * sizeof(t_float);
+        this->horizon_index = this->vertical_rot + this->horizon_buffer_size * sizeof(t_float);
+        this->vertical_index = this->horizon_index + this->vertical_buffer_size * sizeof(t_float);
+        */
+
+        this->horizon_index = reinterpret_cast<t_int*>(buffer);
+        this->vertical_index = this->horizon_index + this->horizon_index_buffer_size;
+        this->horizon_rot = reinterpret_cast<t_float*>(this->vertical_index) + this->vertical_index_buffer_size;
+        this->vertical_rot = this->horizon_rot + this->horizon_rot_buffer_size;
+
+        this->tmp_transpose_real.input(
+            this->vertical_rot + this->vertical_rot_buffer_size,
+            this->fft_src_real->rows(), this->fft_src_real->cols() + 1,
+            this->fft_src_real->align()
+        );
+        this->tmp_transpose_imag.input(
+            this->tmp_transpose_real.data + this->tmp_transpose_buffer_size,
+            this->fft_src_real->rows(), this->fft_src_real->cols() + 1,
+            this->fft_src_real->align()
+        );
+
+        // 計算用に一行空ける
+        t_float* tmp_real = this->tmp_transpose_real.data + this->tmp_transpose_real.stride();
+        t_float* tmp_imag = this->tmp_transpose_imag.data + this->tmp_transpose_imag.stride();
+
+        this->f_horizon.PrePlan(
+            this->fft_src_real->elementsRow(),
+            this->fft_src_real->data, this->fft_src_imag->data,
+            this->fft_dst_real->data, this->fft_dst_imag->data,
+            nullptr, nullptr,
+            this->horizon_rot, this->horizon_index
+        );
+
+        this->f_vertical.PrePlan(
+            this->tmp_transpose_real.elementsRow(),
+            tmp_real, tmp_imag,
+            this->tmp_transpose_real.data, this->tmp_transpose_imag.data,
+            nullptr, nullptr,
+            this->vertical_rot, this->vertical_index
+        );
+
+        return t_err_None;
+
+    }
+
+    void Fourier2d::fft(void) {
+
+        const t_int cols = this->fft_src_real->cols();
+        const t_int rows = this->fft_src_real->rows();
+
+        // 各行にFFT
+        #pragma omp parallel for
+        for (t_int y = 0; y < rows; y++) {
+            this->f_horizon.RePlan(
+                this->fft_src_real->rowPtr(y), this->fft_src_imag->rowPtr(y),
+                this->fft_dst_real->rowPtr(y), this->fft_dst_imag->rowPtr(y),
+                nullptr, nullptr
+            );
+            this->f_horizon.fft();
+        }
+
+        // 計算用に一行空ける
+        this->tmp_transpose_real.data += this->tmp_transpose_real.stride();
+        this->tmp_transpose_imag.data += this->tmp_transpose_imag.stride();
+        // 転置
+        transpose(
+            this->fft_dst_real, this->fft_dst_imag,
+            &this->tmp_transpose_real, &this->tmp_transpose_imag
+        );
+        // 戻す
+        this->tmp_transpose_real.data -= this->tmp_transpose_real.stride();
+        this->tmp_transpose_imag.data -= this->tmp_transpose_imag.stride();
+
+        // 各列にFFT
+        #pragma omp parallel for
+        for (t_int y = 0; y < cols; y++) {
+            this->f_vertical.RePlan(
+                this->tmp_transpose_real.rowPtr(y + 1), this->tmp_transpose_imag.rowPtr(y + 1),
+                this->tmp_transpose_real.rowPtr(y), this->tmp_transpose_imag.rowPtr(y),
+                nullptr, nullptr
+            );
+            this->f_vertical.fft();
+        }
+
+        // 転置
+        transpose(
+            &this->tmp_transpose_real, &this->tmp_transpose_imag,
+            this->fft_dst_real, this->fft_dst_imag
+        );
+
+    }
+
+    void Fourier2d::ifft(void) {
+
+        const t_int cols = this->fft_src_real->cols();
+        const t_int rows = this->fft_src_real->rows();
+
+        // 計算用に一行開けた分を足す
+        this->tmp_transpose_real.data += this->tmp_transpose_real.stride();
+        this->tmp_transpose_imag.data += this->tmp_transpose_imag.stride();
+        // 転置
+        transpose(
+            this->fft_dst_real, this->fft_dst_imag,
+            &this->tmp_transpose_real, &this->tmp_transpose_imag
+        );
+        // 戻す
+        this->tmp_transpose_real.data -= this->tmp_transpose_real.stride();
+        this->tmp_transpose_imag.data -= this->tmp_transpose_imag.stride();
+
+        // 各列にIFFT
+        #pragma omp parallel for
+        for (t_int y = 0; y < cols; y++) {
+            this->f_vertical.RePlan(
+                nullptr, nullptr,
+                this->tmp_transpose_real.rowPtr(y + 1), this->tmp_transpose_imag.rowPtr(y + 1),
+                this->tmp_transpose_real.rowPtr(y), this->tmp_transpose_imag.rowPtr(y)
+            );
+            this->f_vertical.ifft();
+        }
+
+        // 転置
+        transpose(
+            &this->tmp_transpose_real, &this->tmp_transpose_imag,
+            this->fft_dst_real, this->fft_dst_imag
+        );
+
+        // 各行にFFT
+        #pragma omp parallel for
+        for (t_int y = 0; y < rows; y++) {
+            this->f_horizon.RePlan(
+                nullptr, nullptr,
+                this->fft_dst_real->rowPtr(y), this->fft_dst_imag->rowPtr(y),
+                this->ifft_dst_real->rowPtr(y), this->ifft_dst_imag->rowPtr(y)
+            );
+            this->f_horizon.ifft();
+        }
+
     }
 
     // 1次元FFT
