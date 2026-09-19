@@ -69,3 +69,14 @@ Visual Studio のフォルダーを開く構成以外で同じ動作にする場
 ```
 
 この機能は MSVC の静的ビルドで有効である．CMake の `add_subdirectory` で tImage を組み込む場合は，通常どおり `target_link_libraries(app PRIVATE tImage)` と指定できる．
+
+## GitHub Actions と Release
+
+ブランチへ通常の push を行うと，Windows と Ubuntu の shared／static ビルドが実行され，生成物は Actions の Artifacts に保存される．この場合，`Publish GitHub Release` は実行されない．
+
+Release を作成する場合は，`v` で始まるタグを push する．タグ push ではビルド完了後に4種類のライブラリが zip ファイルとして Release に添付される．
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
