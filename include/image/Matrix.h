@@ -28,7 +28,7 @@ namespace tImage {
 		t_err _allocate_memory() {
 
             // calc stride
-            this->_stride = calcStride4Matrix(this->_cols, sizeof(T), this->_align);;
+            this->_stride = calcStride4Matrix(this->_cols, sizeof(T), this->_align);
             this->_elements_row = this->_stride / sizeof(T);
 
             // total bytes

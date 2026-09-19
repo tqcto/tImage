@@ -47,6 +47,7 @@ add_subdirectory(thirdparty/libpng)
 set(TIMAGE_SOURCES
     src/effect/gaussianBlur.cpp
     src/image/Image.cpp
+    src/image/MatrixConverter.cpp
     src/manage/manage.cpp
     src/tool/converter.cpp
     src/tool/merge.cpp

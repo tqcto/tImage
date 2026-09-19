@@ -5,6 +5,7 @@
 #include "tImage_definition.h"
 #include "image/Matrix.h"
 #include "image/image.h"
+#include "image/MatrixConverter.h"
 
 #include "manage/manage.h"
 
