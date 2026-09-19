@@ -21,6 +21,28 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Debug-Static",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${projectDir}/build/${name}",
+      "installRoot": "${projectDir}/build/install/${name}",
+      "cmakeCommandArgs": "-DBUILD_SHARED_LIBS=OFF",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Release-Static",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${projectDir}/build/${name}",
+      "installRoot": "${projectDir}/build/install/${name}",
+      "cmakeCommandArgs": "-DBUILD_SHARED_LIBS=OFF",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": ""
     }
   ]
 }

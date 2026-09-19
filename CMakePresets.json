@@ -23,6 +23,26 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "x64-debug-static",
+      "displayName": "x64 Debug Static",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_SHARED_LIBS": "OFF"
+      }
+    },
+    {
+      "name": "x64-release-static",
+      "displayName": "x64 Release Static",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_SHARED_LIBS": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -33,6 +53,14 @@
     {
       "name": "x64-release",
       "configurePreset": "x64-release"
+    },
+    {
+      "name": "x64-debug-static",
+      "configurePreset": "x64-debug-static"
+    },
+    {
+      "name": "x64-release-static",
+      "configurePreset": "x64-release-static"
     }
   ]
 }

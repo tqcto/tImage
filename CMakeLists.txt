@@ -4,7 +4,8 @@ project(tImage CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 動的ライブラリ(DLL)か静的ライブラリ(.lib)かを切り替えるオプション (デフォルト: ON = DLL化)
+# 動的ライブラリ(DLL)か静的ライブラリ(.lib)かを切り替えるオプション
+# ON: DLL、OFF: 静的ライブラリ(.lib)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(TIMAGE_ENABLE_OPENMP "Enable OpenMP acceleration" ON)
 
@@ -72,7 +73,7 @@ if(BUILD_SHARED_LIBS)
     target_compile_definitions(tImage PRIVATE TIMAGE_BUILD_DLL)
 endif()
 
-if(MSVC)
+if(MSVC AND TIMAGE_ENABLE_OPENMP)
     target_compile_options(tImage PRIVATE /openmp:experimental)
 endif()
 
@@ -119,8 +120,8 @@ if(NOT EMSCRIPTEN)
             )
         endif()
 
-        # ビルド成功後、zlib DLLが存在していればコピー
-        if(TARGET zlib)
+        # DLLビルド時だけ、zlib DLLが存在していればコピー
+        if(BUILD_SHARED_LIBS AND TARGET zlib)
             add_custom_command(TARGET tImage_debug POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:zlib>
