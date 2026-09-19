@@ -16,6 +16,12 @@ option(TIMAGE_BUNDLE_STATIC_DEPENDENCIES
        "Bundle libpng and zlib into the static tImage library"
        ${TIMAGE_BUNDLE_STATIC_DEFAULT})
 
+# Linuxなどで静的なlibpng/zlibを共有ライブラリへ組み込むために、
+# 依存ライブラリも位置独立コードとしてコンパイルする。
+if(BUILD_SHARED_LIBS AND NOT MSVC)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 if(TIMAGE_ENABLE_OPENMP AND NOT EMSCRIPTEN)
     find_package(OpenMP QUIET)
 endif()
