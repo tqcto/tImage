@@ -1,0 +1,90 @@
+name: Build tImage
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os }} / ${{ matrix.kind }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            kind: shared
+            shared: "ON"
+            generator: Visual Studio 17 2022
+            build_dir: build/ci-windows-shared
+          - os: windows-2022
+            kind: static
+            shared: "OFF"
+            generator: Visual Studio 17 2022
+            build_dir: build/ci-windows-static
+          - os: ubuntu-22.04
+            kind: shared
+            shared: "ON"
+            generator: Ninja
+            build_dir: build/ci-linux-shared
+          - os: ubuntu-22.04
+            kind: static
+            shared: "OFF"
+            generator: Ninja
+            build_dir: build/ci-linux-static
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure
+        shell: bash
+        run: >-
+          cmake -S .
+          -B "${{ matrix.build_dir }}"
+          -G "${{ matrix.generator }}"
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_SHARED_LIBS=${{ matrix.shared }}
+          -DTIMAGE_ENABLE_OPENMP=ON
+          -DTIMAGE_BUNDLE_STATIC_DEPENDENCIES=${{ matrix.shared == 'OFF' && runner.os == 'Windows' && 'ON' || 'OFF' }}
+          ${{ runner.os == 'Windows' && '-A x64' || '' }}
+
+      - name: Build tImage
+        shell: bash
+        run: cmake --build "${{ matrix.build_dir }}" --config Release --target tImage --parallel
+
+      - name: Collect Windows libraries
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/include | Out-Null
+          Copy-Item -Recurse -Force include/* artifact/include/
+          $configurationDir = Join-Path '${{ matrix.build_dir }}' 'Release'
+          Get-ChildItem -Path $configurationDir -File |
+            Where-Object { $_.Name -in @('tImage.dll', 'tImage.lib') } |
+            Copy-Item -Destination artifact -Force
+
+      - name: Collect Linux libraries
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p artifact/include
+          cp -R include/. artifact/include/
+          find "${{ matrix.build_dir }}" -type f \( -name 'libtImage.so*' -o -name 'libtImage.a' \) -exec cp -f {} artifact/ \;
+
+      - name: Verify library artifact
+        shell: bash
+        run: |
+          test -n "$(find artifact -maxdepth 1 -type f | head -n 1)"
+          find artifact -maxdepth 2 -type f -print
+
+      - name: Upload library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tImage-${{ matrix.os }}-${{ matrix.kind }}
+          path: artifact
+          if-no-files-found: error
