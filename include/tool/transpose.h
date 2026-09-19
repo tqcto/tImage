@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../tImage_definition.h"
-#include "../Image/Matrix.h"
+#include "../image/Matrix.h"
 #include "../image/Image.h"
 
 namespace tImage {

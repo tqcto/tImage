@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "**"
+    tags:
+      - "v*"
 
 permissions:
   contents: read
@@ -88,3 +90,34 @@ jobs:
           name: tImage-${{ matrix.os }}-${{ matrix.kind }}
           path: artifact
           if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tImage-*
+          path: release-assets
+
+      - name: Package build artifacts
+        shell: bash
+        run: |
+          for directory in release-assets/tImage-*; do
+            archive="${directory##*/}.zip"
+            (cd "$directory" && zip -qr "../$archive" .)
+          done
+          ls -lh release-assets/*.zip
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release-assets/*.zip
