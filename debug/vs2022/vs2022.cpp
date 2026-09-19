@@ -625,7 +625,7 @@ void test_fft4Image(void) {
 
 }
 
-int main(void) {
+t_int main(void) {
 
 	//test_Matrix();
 	

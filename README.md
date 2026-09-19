@@ -1,8 +1,9 @@
 # tImage: 汎用・高速画像処理ライブラリ
+
 あらゆる環境で高速に動作する画像処理フレームワークを提供する．
 メモリの確保および解放は，基本的に利用環境に任せる設計としている．
 
-# コンパイル方法
+## コンパイル方法
 
 ## CMake プリセットを使う方法
 
@@ -59,4 +60,12 @@ cmake --build build/vs2022-static --config Release --target tImage
 
 DLL をビルドする場合は，構成時の `-DBUILD_SHARED_LIBS=OFF` を `-DBUILD_SHARED_LIBS=ON` に変更する．
 
-静的ビルドでは `z.dll` を実行時に配置する必要はない．ただし，利用側のリンク時には `tImage.lib` に加えて，CMake の `tImage` ターゲットが参照する `libpng16_static.lib` と `zs.lib` も必要．CMake の `add_subdirectory` で tImage を組み込む場合は，`target_link_libraries(app PRIVATE tImage)` とすることで依存関係を CMake に解決させられる．
+静的ビルドでは，MSVC用の `x64-Debug-Static`／`x64-Release-Static` 構成により，libpng と zlib のオブジェクトを `tImage.lib` に取り込む．そのため利用側は `tImage.lib` だけをリンクすればよく，`z.dll`，`libpng16_static.lib`，`zs.lib` を配置・指定する必要はない．
+
+Visual Studio のフォルダーを開く構成以外で同じ動作にする場合は，次のオプションを指定する．
+
+```text
+-DBUILD_SHARED_LIBS=OFF -DTIMAGE_BUNDLE_STATIC_DEPENDENCIES=ON
+```
+
+この機能は MSVC の静的ビルドで有効である．CMake の `add_subdirectory` で tImage を組み込む場合は，通常どおり `target_link_libraries(app PRIVATE tImage)` と指定できる．

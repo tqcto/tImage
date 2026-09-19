@@ -8,6 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ON: DLL、OFF: 静的ライブラリ(.lib)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(TIMAGE_ENABLE_OPENMP "Enable OpenMP acceleration" ON)
+set(TIMAGE_BUNDLE_STATIC_DEFAULT OFF)
+if(NOT BUILD_SHARED_LIBS AND MSVC)
+    set(TIMAGE_BUNDLE_STATIC_DEFAULT ON)
+endif()
+option(TIMAGE_BUNDLE_STATIC_DEPENDENCIES
+       "Bundle libpng and zlib into the static tImage library"
+       ${TIMAGE_BUNDLE_STATIC_DEFAULT})
 
 if(TIMAGE_ENABLE_OPENMP AND NOT EMSCRIPTEN)
     find_package(OpenMP QUIET)
@@ -81,11 +88,35 @@ if(OpenMP_CXX_FOUND AND NOT MSVC)
     target_link_libraries(tImage PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
-# tImage に png_static と zlibstatic をリンク
-target_link_libraries(tImage PRIVATE
-    png_static
-    zlibstatic
-)
+# 通常は依存ライブラリをtImageのリンク要件として伝播する。
+# MSVCの統合静的ビルドでは、依存オブジェクトをtImage.libへ取り込むため、
+# 利用側へ同じライブラリを再度渡さない。
+if(NOT BUILD_SHARED_LIBS AND MSVC AND TIMAGE_BUNDLE_STATIC_DEPENDENCIES)
+    add_dependencies(tImage png_static zlibstatic)
+else()
+    target_link_libraries(tImage PRIVATE
+        png_static
+        zlibstatic
+    )
+endif()
+
+# MSVCの静的ライブラリは、依存する静的ライブラリをtImage.libへ取り込む
+# ことで、利用側がtImage.libだけを指定できるようにする。
+if(NOT BUILD_SHARED_LIBS AND MSVC AND TIMAGE_BUNDLE_STATIC_DEPENDENCIES)
+    add_custom_command(TARGET tImage POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rm -f "$<TARGET_FILE:tImage>.merged.lib"
+        COMMAND "${CMAKE_AR}"
+                "/OUT:$<TARGET_FILE:tImage>.merged.lib"
+                "$<TARGET_FILE:tImage>"
+                "$<TARGET_FILE:png_static>"
+                "$<TARGET_FILE:zlibstatic>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:tImage>.merged.lib"
+                "$<TARGET_FILE:tImage>"
+        COMMAND ${CMAKE_COMMAND} -E rm -f "$<TARGET_FILE:tImage>.merged.lib"
+        VERBATIM
+    )
+endif()
 
 # MSVCの場合、libpngヘッダーが要求するデフォルトのライブラリ自動リンク指定を無効化
 if(MSVC)

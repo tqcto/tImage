@@ -6,12 +6,6 @@
 
 #include <png.h>
 
-#ifdef _DEBUG
-#pragma comment(lib, "libpng16d.lib")
-#else
-#pragma comment(lib, "libpng16.lib")
-#endif
-
 #define SIGNATURE_NUM	8
 
 namespace tImage {
