@@ -52,4 +52,36 @@ namespace tImage {
 
     }
 
+    // MatrixクラスをImageクラスに変換．
+    // dstのチャンネル数は1であることを前提とする．
+    template<typename T> t_err Matrix2Image(
+        Matrix<T>* __restrict src, Image* __restrict dst
+    ) {
+
+        if (
+            src->empty() || dst->empty()
+             || src->cols() != dst->width() || src->rows() != dst->height()
+        ) return t_err_InvalidArgument;
+
+        const t_int width = dst->width();
+        const t_int height = dst->height();
+
+        #pragma omp parallel for schedule(static)
+        for (t_int y = 0; y < height; y++) {
+            
+            const T* __restrict src_rowptr = src->rowPtr(y);
+            t_uchar* __restrict dst_rowptr = dst->rowPtr(y);
+            
+            #pragma omp simd
+            for (t_int x = 0; x < width; x++) {
+
+                dst_rowptr[x] = static_cast<t_uchar>(src_rowptr[x] * 255.f);
+
+            }
+        }
+
+        return t_err_None;
+
+    }
+
 }

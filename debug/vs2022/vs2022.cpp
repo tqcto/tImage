@@ -474,6 +474,155 @@ void test_Image2Matrix(void) {
 		printf("\n");
 	}
 
+	Matrix2Image(&dst, &src);
+
+	printf("pullback:\n");
+	for (t_int y = 0; y < height; y++) {
+		auto* rowptr = src.rowPtr(y);
+		for (t_int x = 0; x < width; x++) {
+
+			printf("%d ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+
+}
+
+void grayscale(Image* src, Image* dst) {
+
+	//#pragma omp prallel for
+	for (t_int y = 0; y < src->height(); y++) {
+
+		auto* src_rowptr = src->rowPtr(y);
+		auto* dst_rowptr = dst->rowPtr(y);
+
+		for (t_int x = 0; x < src->width(); x++) {
+
+			t_int sum = 0;
+			for (t_int c = 0; c < 3; c++) {
+				sum += src_rowptr[x * src->channels() + c];
+			}
+			dst_rowptr[x] = static_cast<t_uchar>(sum / src->channels());
+
+		}
+
+	}
+
+}
+void gs3(Image* src, Image* dst) {
+
+	for (t_int y = 0; y < dst->height(); y++) {
+
+		auto* src_rowptr = src->rowPtr(y);
+		auto* dst_rowptr = dst->rowPtr(y);
+
+		for (t_int x = 0; x < dst->width(); x++) {
+
+			for (t_int c = 0; c < 3; c++) {
+
+				dst_rowptr[x * dst->channels() + c] = src_rowptr[x];
+				
+			}
+
+		}
+
+	}
+
+}
+void test_fft4Image(void) {
+
+	Image input;
+	if (decodePNG(&input, IMG_PATH) != t_err_None) {
+		return;
+	}
+
+	const t_uint cols = input.width();
+	const t_uint rows = input.height();
+	const t_uint padded_cols = calc_padding(cols);
+	const t_uint padded_rows = calc_padding(rows);
+
+	Image src(input.width(), input.height(), 1);
+	grayscale(&input, &src);
+
+	gs3(&src, &input);
+	encodePNG(&input, "src.png");
+
+	Matrix<t_float> src_real(padded_cols, padded_rows);
+	Matrix<t_float> src_imag(padded_cols, padded_rows);
+	for (t_uint y = 0; y < padded_rows; ++y) {
+		t_float* real_row = src_real.rowPtr(y);
+		t_float* imag_row = src_imag.rowPtr(y);
+		for (t_uint x = 0; x < src_real.elementsRow(); ++x) {
+			real_row[x] = 0.0f;
+			imag_row[x] = 0.0f;
+		}
+	}
+
+	Matrix<t_float> src_real_unpadded(cols, rows);
+	if (Image2Matrix(&src, &src_real_unpadded) != t_err_None) {
+		return;
+	}
+	for (t_uint y = 0; y < rows; ++y) {
+		const t_float* src_row = src_real_unpadded.rowPtr(y);
+		t_float* dst_row = src_real.rowPtr(y);
+		for (t_uint x = 0; x < cols; ++x) {
+			dst_row[x] = src_row[x];
+		}
+	}
+
+	// FFT
+	Matrix<t_float> dst_real(padded_cols, padded_rows);
+	Matrix<t_float> dst_imag(padded_cols, padded_rows);
+	Matrix<t_float> ifft_real(padded_cols, padded_rows);
+	Matrix<t_float> ifft_imag(padded_cols, padded_rows);
+
+	Fourier2d fourier;
+	t_uint64 size = fourier.PreSetup(
+		&src_real, &src_imag,
+		&dst_real, &dst_imag,
+		&ifft_real, &ifft_imag
+	);
+	void* buffer = malloc(size);
+	fourier.Setup(buffer);
+	fourier.fft();
+
+	Matrix2Image(&dst_real, &src);
+	gs3(&src, &input);
+	encodePNG(&input, "fourierTransformedRealPart.png");
+
+	// Low Pass Filter
+	t_int lp_size = 50;
+	for (t_int y = 0; y < lp_size; y++) {
+		auto real_rowptr = dst_real.rowPtr(y);
+		auto imag_rowptr = dst_imag.rowPtr(y);
+		for (t_int x = 0; x < lp_size; x++) {
+			real_rowptr[x] = imag_rowptr[x] = 0.f;
+		}
+	}
+
+	fourier.ifft();
+	// FFT
+
+	Matrix<t_float> ifft_real_unpadded(cols, rows);
+	for (t_uint y = 0; y < rows; ++y) {
+		const t_float* src_row = ifft_real.rowPtr(y);
+		t_float* dst_row = ifft_real_unpadded.rowPtr(y);
+		for (t_uint x = 0; x < cols; ++x) {
+			dst_row[x] = src_row[x];
+		}
+	}
+
+	if (Matrix2Image(&ifft_real_unpadded, &src) != t_err_None) {
+		free(buffer);
+		return;
+	}
+
+	gs3(&src, &input);
+	encodePNG(&input, "pullback.png");
+	
+	free(buffer);
+
 }
 
 int main(void) {
@@ -488,7 +637,9 @@ int main(void) {
 
 	// test_Fourier2d();
 
-	test_Image2Matrix();
+	// test_Image2Matrix();
+
+	test_fft4Image();
 
     Image src;
     decodePNG(&src, IMG_PATH);
