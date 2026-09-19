@@ -23,6 +23,24 @@ cmake --build --preset x64-debug-static
 
 Release ビルドは `x64-release` または `x64-release-static` に置き換える．
 
+## WebAssembly (Emscripten) でビルドする方法
+
+Emscripten SDK をインストールし，Emscripten の環境を有効化したシェルで実行する．Windows PowerShell では，例えば次のようにする．
+
+```powershell
+# emsdk のパスは環境に合わせて変更する
+cd C:\path\to\emsdk
+.\emsdk_env.ps1
+cd C:\path\to\tImage
+
+cmake --preset wasm-release
+cmake --build --preset wasm-release --target tImage
+```
+
+生成物は `build/wasm-release/libtImage.a` である．このプリセットでは，ブラウザーまたはNode.jsからリンクできる静的ライブラリとして生成するため，`BUILD_SHARED_LIBS=OFF` と `TIMAGE_ENABLE_OPENMP=OFF` を指定している．JavaScript APIやWasmモジュールまで生成する場合は，このライブラリを利用する側のEmscriptenターゲットで `emcc` または `em++` にリンクし，`-sMODULARIZE=1` などの実行環境向けオプションを指定する．
+
+Emscripten の環境が有効かどうかは，`emcc --version` で確認できる．`emcc` が見つからない場合は，先に emsdk をインストールして `emsdk_env.ps1` を実行する．
+
 ## コマンドラインで直接指定する方法
 
 プリセットを使わず，出力先とライブラリ形式を明示することもできる．

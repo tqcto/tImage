@@ -91,10 +91,53 @@ jobs:
           path: artifact
           if-no-files-found: error
 
+  build-wasm:
+    name: ubuntu-22.04 / wasm
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+
+      - name: Configure Wasm
+        shell: bash
+        run: >-
+          emcmake cmake -S .
+          -B build/ci-wasm
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_SHARED_LIBS=OFF
+          -DTIMAGE_ENABLE_OPENMP=OFF
+
+      - name: Build Wasm library
+        shell: bash
+        run: cmake --build build/ci-wasm --target tImage --parallel
+
+      - name: Collect Wasm library
+        shell: bash
+        run: |
+          mkdir -p artifact/include
+          cp -R include/. artifact/include/
+          find build/ci-wasm -type f -name 'libtImage.a' -exec cp -f {} artifact/ \;
+          test -f artifact/libtImage.a
+          find artifact -maxdepth 2 -type f -print
+
+      - name: Upload Wasm library artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: tImage-ubuntu-22.04-wasm
+          path: artifact
+          if-no-files-found: error
+
   publish-release:
     name: Publish GitHub Release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, build-wasm]
     runs-on: ubuntu-latest
     permissions:
       contents: write
