@@ -439,6 +439,43 @@ void test_Fourier2d(void) {
 
 }
 
+void test_Image2Matrix(void) {
+
+	const t_uint width = 10;
+	const t_uint height = 10;
+	const t_uint channels = 1;
+
+	Image src(width, height, channels);
+	Matrix<t_float> dst(width, height);
+
+	const t_uchar s = 255 / (width - 1);
+	printf("src:\n");
+	for (t_int y = 0; y < height; y++) {
+		auto* rowptr = src.rowPtr(y);
+		for (t_int x = 0; x < width; x++) {
+
+			rowptr[x] = x * s;
+			printf("%d ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+
+	Image2Matrix(&src, &dst);
+
+	printf("dst:\n");
+	for (t_int y = 0; y < height; y++) {
+		auto* rowptr = dst.rowPtr(y);
+		for (t_int x = 0; x < width; x++) {
+
+			printf("%f ", rowptr[x]);
+
+		}
+		printf("\n");
+	}
+
+}
+
 int main(void) {
 
 	//test_Matrix();
@@ -449,7 +486,9 @@ int main(void) {
 	// test_transpose();
 	// test_Fourier2dBlock();
 
-	test_Fourier2d();
+	// test_Fourier2d();
+
+	test_Image2Matrix();
 
     Image src;
     decodePNG(&src, IMG_PATH);
