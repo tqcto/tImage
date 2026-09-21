@@ -1,5 +1,9 @@
 #include "../../include/tool/split.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #if defined(__AVX2__)
 #include <immintrin.h>
 #endif
@@ -27,7 +31,7 @@ namespace tImage {
 	}
     */
 
-    t_err split_RGB24(Image* src, Image* dst_planes) {
+    void split_RGB24(Image* src, Image* dst_planes) {
 
         t_uint64 total_pixels = (t_uint64)src->width() * src->height();
         // バッファに余裕があると仮定（allocate時に padding を追加）
@@ -75,7 +79,34 @@ namespace tImage {
         }
         #endif
 
-        return t_err_None;
+    }
+
+    void split_RGBA32(Image* src, Image* dst_planes) {
+
+        const t_int width = src->width();
+        const t_int height = src->height();
+
+        #pragma omp parallel for
+        for (t_int y = 0; y < height; y++) {
+
+            t_uchar* src_rowptr = src->rowPtr(y);
+            t_uchar* dst0_rowptr = dst_planes[0].rowPtr(y);
+            t_uchar* dst1_rowptr = dst_planes[1].rowPtr(y);
+            t_uchar* dst2_rowptr = dst_planes[2].rowPtr(y);
+            t_uchar* dst3_rowptr = dst_planes[3].rowPtr(y);
+
+            #pragma omp simd
+            for (t_int x = 0; x < width; x++) {
+
+                dst0_rowptr[x] = src_rowptr[x << 2];
+                dst1_rowptr[x] = src_rowptr[(x << 2) + 1];
+                dst2_rowptr[x] = src_rowptr[(x << 2) + 2];
+                dst3_rowptr[x] = src_rowptr[(x << 2) + 3];
+
+            }
+
+        }
+
     }
 
     t_err split(Image* src, Image* dst_planes) {
@@ -86,16 +117,19 @@ namespace tImage {
 
         // RGB24
         if (channels == 3) {
-            return split_RGB24(src, dst_planes);
-        }/*
+            split_RGB24(src, dst_planes);
+        }
         // RGBA32
         else if (channels == 4) {
-            return split_RGBA32(src, dst_planes);
+            split_RGBA32(src, dst_planes);
         }
+        /*
         // other
         else {
             return split_generic(src, dst_planes);
         }*/
+
+        return t_err_None;
 
     }
 

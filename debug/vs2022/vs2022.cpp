@@ -625,6 +625,29 @@ void test_fft4Image(void) {
 
 }
 
+void test_split_merge(void) {
+
+	Image input;
+	if (decodePNG(&input, IMG_PATH) != t_err_None) {
+		return;
+	}
+
+	printf("input img channels=%d\n", input.channels());
+
+	Image dst_planes[] = {
+		Image(input.width(), input.height(), input.channels()),
+		Image(input.width(), input.height(), input.channels()),
+		Image(input.width(), input.height(), input.channels()),
+		Image(input.width(), input.height(), input.channels())
+	};
+	split(&input, dst_planes);
+
+	merge(dst_planes, &input);
+
+	encodePNG(&input, "split_and_merged.png");
+
+}
+
 t_int main(void) {
 
 	//test_Matrix();
@@ -639,8 +662,10 @@ t_int main(void) {
 
 	// test_Image2Matrix();
 
-	test_fft4Image();
+	// test_fft4Image();
 
+	test_split_merge();
+	
     Image src;
     decodePNG(&src, IMG_PATH);
 
