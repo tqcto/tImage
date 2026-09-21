@@ -93,5 +93,3 @@ Visual Studio のフォルダーを開く構成以外で同じ動作にする場
 - zlib
 - libpng
 - libjpeg
-- xsimd
-  - License: BSD 3-Clause

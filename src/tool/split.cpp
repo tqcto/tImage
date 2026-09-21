@@ -1,7 +1,5 @@
 #include "../../include/tool/split.h"
 
-#include <xsimd/xsimd.hpp>
-
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
@@ -97,7 +95,7 @@ namespace tImage {
             t_uchar* dst2_rowptr = dst_planes[2].rowPtr(y);
             t_uchar* dst3_rowptr = dst_planes[3].rowPtr(y);
 
-            // #pragma omp simd
+            #pragma omp simd
             for (t_int x = 0; x < width; x++) {
 
                 dst0_rowptr[x] = src_rowptr[x << 2];
@@ -110,36 +108,6 @@ namespace tImage {
         }
 
     }
-    // void split_RGBA32_simd(Image* src, Image* dst_planes) {
-
-    //     const t_int width = src->width();
-    //     const t_int height = src->height();
-
-    //     using batch = xsimd::batch<t_uchar>;
-    //     constexpr std::size_t batch_size = batch::size;
-
-    //     #pragma omp parallel for schedule(static) if(width * height >= 512 * 512)
-    //     for (t_int y = 0; y < height; y++) {
-
-    //         t_uchar* src_rowptr = src->rowPtr(y);
-    //         t_uchar* dst0_rowptr = dst_planes[0].rowPtr(y);
-    //         t_uchar* dst1_rowptr = dst_planes[1].rowPtr(y);
-    //         t_uchar* dst2_rowptr = dst_planes[2].rowPtr(y);
-    //         t_uchar* dst3_rowptr = dst_planes[3].rowPtr(y);
-
-    //         // #pragma omp simd
-    //         for (t_int x = 0; x < width; x++) {
-
-    //             dst0_rowptr[x] = src_rowptr[x << 2];
-    //             dst1_rowptr[x] = src_rowptr[(x << 2) + 1];
-    //             dst2_rowptr[x] = src_rowptr[(x << 2) + 2];
-    //             dst3_rowptr[x] = src_rowptr[(x << 2) + 3];
-
-    //         }
-
-    //     }
-
-    // }
 
     t_err split(Image* src, Image* dst_planes) {
 
