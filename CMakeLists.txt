@@ -56,7 +56,13 @@ set(PNG_TOOLS OFF CACHE BOOL "Build libpng tools" FORCE)
 add_subdirectory(thirdparty/libpng)
 
 # ------------------------------------------------------------------------------
-# 3. tImage ライブラリターゲットの作成
+# 3. xsimd (thirdparty) の設定
+# ------------------------------------------------------------------------------
+# xsimd はヘッダー専用ライブラリのため、ビルド対象には含めずターゲットだけ利用する。
+add_subdirectory(thirdparty/xsimd EXCLUDE_FROM_ALL)
+
+# ------------------------------------------------------------------------------
+# 4. tImage ライブラリターゲットの作成
 # ------------------------------------------------------------------------------
 set(TIMAGE_SOURCES
     src/effect/gaussianBlur.cpp
@@ -94,6 +100,8 @@ if(OpenMP_CXX_FOUND AND NOT MSVC)
     target_link_libraries(tImage PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
+target_link_libraries(tImage PRIVATE xsimd)
+
 # 通常は依存ライブラリをtImageのリンク要件として伝播する。
 # MSVCの統合静的ビルドでは、依存オブジェクトをtImage.libへ取り込むため、
 # 利用側へ同じライブラリを再度渡さない。
@@ -130,7 +138,7 @@ if(MSVC)
 endif()
 
 # ------------------------------------------------------------------------------
-# 4. デバッグ用実行ファイル (tImage_debug)
+# 5. デバッグ用実行ファイル (tImage_debug)
 # ------------------------------------------------------------------------------
 if(NOT EMSCRIPTEN)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/debug/main.cpp")
