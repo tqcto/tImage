@@ -13,6 +13,7 @@
 #include "tool/split.h"
 #include "tool/merge.h"
 #include "tool/transpose.h"
+#include "tool/padding.h"
 #include "tool/fft.h"
 
 #endif

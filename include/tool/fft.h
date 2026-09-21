@@ -29,12 +29,6 @@ namespace tImage {
         Fourier1d* block_fourier;
     } Fourier2dWorkspace;
 
-    // FFT用にn以上の最小び2の累乗数を計算
-    DLL_EXPORT t_uint calc_padding(t_uint n);
-
-    // n以上でblockSizeの倍数となるサイズを計算
-    DLL_EXPORT t_uint calcPaddedSize(t_uint n, t_uint blockSize);
-
     // 1次元FFT/IFFTクラス
     class Fourier1d {
 

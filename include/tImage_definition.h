@@ -34,6 +34,24 @@ typedef uint32_t            t_uint;     // 符号なし4byte
 typedef uint8_t             t_uchar;    // 符号なし1byte (画素データに最適)
 typedef uint64_t            t_uint64;   // 符号なし8byte
 
+typedef struct _t_intpoint2d {
+
+	t_int x;
+	t_int y;
+
+	explicit _t_intpoint2d(t_int x, t_int y) : x{x}, y{y} {}
+
+}t_point2d;
+
+typedef struct _t_uintpoint2d {
+
+	t_uint x;
+	t_uint y;
+
+	explicit _t_uintpoint2d(t_uint x, t_uint y) : x{x}, y{y} {}
+
+}t_uintpoint2d;
+
 // for SIMD�i32byte�j
 #define T_IMAGE_DEFAULT_ALIGN	32
 

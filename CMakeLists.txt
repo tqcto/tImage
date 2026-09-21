@@ -67,6 +67,7 @@ set(TIMAGE_SOURCES
     src/tool/merge.cpp
     src/tool/split.cpp
     src/tool/transpose.cpp
+    src/tool/padding.cpp
     src/tool/fft.cpp
     src/proc/intrin_avx.cpp
 )

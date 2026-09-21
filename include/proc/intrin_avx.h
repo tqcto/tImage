@@ -6,7 +6,7 @@ namespace tImage {
 namespace simd {
 
     typedef struct {
-
+        
     }vp_uint8x32;
 
 }

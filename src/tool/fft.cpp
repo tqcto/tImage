@@ -1,5 +1,6 @@
 #include "../../include/tool/fft.h"
 #include "../../include/tool/transpose.h"
+#include "../../include/tool/padding.h"
 
 //#include <bit>		// C++20
 //#include <numbers>	// C++20
@@ -15,20 +16,6 @@ constexpr tImage::t_float kPi = 3.14159265358979323846f;
 
 namespace tImage {
 
-    // n以下の最大の2の累乗数を計算
-    inline t_uint bit_floor(t_uint n) {
-
-        // t_uint is 32bit
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-
-        return n - (n >> 1);
-
-    }
-
     // iは普通のインデックスで、mはビット数
     inline t_int reverseIndex(t_int index, t_int m) {
 
@@ -40,21 +27,6 @@ namespace tImage {
         }
         
         return t;
-
-    }
-
-    t_uint calc_padding(t_uint n) {
-
-        //t_uint ceilN = std::bit_ceil(n); // C++20
-        t_uint floorN = bit_floor(n);
-        return floorN << (n != floorN);
-
-    }
-
-    t_uint calcPaddedSize(t_uint n, t_uint blockSize) {
-
-        if (blockSize == 0) return 0;
-        return ((n + blockSize - 1) / blockSize) * blockSize;
 
     }
 

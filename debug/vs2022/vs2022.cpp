@@ -22,7 +22,7 @@ void test_Fourier1d(void) {
 	//const t_uint N = 1920 * 1080 * 3;
 	//const t_uint N = 1920 * 3;
 	const t_uint N = 10;
-	t_uint paddedN = calc_padding(N);
+	t_uint paddedN = calcPaddingSize(N);
 	
 	printf("source data:\n");
 	t_float* src_real = (t_float*)malloc(sizeof(t_float) * paddedN);
@@ -95,7 +95,7 @@ void test_fft(void) {
 
 	//const t_uint N = 1920 * 1080 * 3;
 	const t_uint N = 1920 * 3;
-	t_uint paddedN = calc_padding(N);
+	t_uint paddedN = calcPaddingSize(N);
 	
 	printf("source data:\n");
 	t_float* src_real = (t_float*)malloc(sizeof(t_float) * paddedN);
@@ -258,8 +258,8 @@ void test_Fourier2dBlock(void) {
 	const t_uint rows = 2160;
 	Matrix<t_float> size_probe(1, 1);
 	const t_uint block_size = size_probe.align() / sizeof(t_float);
-	const t_uint padded_cols = calcPaddedSize(cols, block_size);
-	const t_uint padded_rows = calcPaddedSize(rows, block_size);
+	const t_uint padded_cols = calcPaddingBlockSize(cols, block_size);
+	const t_uint padded_rows = calcPaddingBlockSize(rows, block_size);
 	Matrix<t_float> src_real(padded_cols, padded_rows);
 	Matrix<t_float> src_imag(padded_cols, padded_rows);
 	Matrix<t_float> dst_real(padded_cols, padded_rows);
@@ -354,8 +354,8 @@ void test_Fourier2d(void) {
 	const t_uint cols = 1920;
 	const t_uint rows = 1080;
 	
-	const t_uint padded_cols = calc_padding(cols);
-	const t_uint padded_rows = calc_padding(rows);
+	const t_uint padded_cols = calcPaddingSize(cols);
+	const t_uint padded_rows = calcPaddingSize(rows);
 
 	Matrix<t_float> src_real(padded_cols, padded_rows);
 	Matrix<t_float> src_imag(padded_cols, padded_rows);
@@ -537,39 +537,16 @@ void test_fft4Image(void) {
 		return;
 	}
 
-	const t_uint cols = input.width();
-	const t_uint rows = input.height();
-	const t_uint padded_cols = calc_padding(cols);
-	const t_uint padded_rows = calc_padding(rows);
+	const t_uintpoint2d img_size = calcPaddingSize2d(&input);
 
-	Image src(input.width(), input.height(), 1);
-	grayscale(&input, &src);
+	Image plane[] = {
+		Image(img_size.x, img_size.y, 1),
+		Image(img_size.x, img_size.y, 1),
+		Image(img_size.x, img_size.y, 1),
+		Image(img_size.x, img_size.y, 1),
+	};
 
-	gs3(&src, &input);
-	encodePNG(&input, "src.png");
-
-	Matrix<t_float> src_real(padded_cols, padded_rows);
-	Matrix<t_float> src_imag(padded_cols, padded_rows);
-	for (t_uint y = 0; y < padded_rows; ++y) {
-		t_float* real_row = src_real.rowPtr(y);
-		t_float* imag_row = src_imag.rowPtr(y);
-		for (t_uint x = 0; x < src_real.elementsRow(); ++x) {
-			real_row[x] = 0.0f;
-			imag_row[x] = 0.0f;
-		}
-	}
-
-	Matrix<t_float> src_real_unpadded(cols, rows);
-	if (Image2Matrix(&src, &src_real_unpadded) != t_err_None) {
-		return;
-	}
-	for (t_uint y = 0; y < rows; ++y) {
-		const t_float* src_row = src_real_unpadded.rowPtr(y);
-		t_float* dst_row = src_real.rowPtr(y);
-		for (t_uint x = 0; x < cols; ++x) {
-			dst_row[x] = src_row[x];
-		}
-	}
+	// padding
 
 	// FFT
 	Matrix<t_float> dst_real(padded_cols, padded_rows);
