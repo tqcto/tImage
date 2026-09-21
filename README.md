@@ -3,7 +3,7 @@
 あらゆる環境で高速に動作する画像処理フレームワークを提供する．
 メモリの確保および解放は，基本的に利用環境に任せる設計としている．
 
-## コンパイル方法
+# コンパイル方法
 
 ## CMake プリセットを使う方法
 
@@ -87,3 +87,9 @@ Visual Studio のフォルダーを開く構成以外で同じ動作にする場
 ```
 
 この機能は MSVC の静的ビルドで有効である．CMake の `add_subdirectory` で tImage を組み込む場合は，通常どおり `target_link_libraries(app PRIVATE tImage)` と指定できる．
+
+## 使用ライブラリ
+
+- zlib
+- libpng
+- libjpeg
