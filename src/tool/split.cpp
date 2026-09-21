@@ -86,7 +86,7 @@ namespace tImage {
         const t_int width = src->width();
         const t_int height = src->height();
 
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(static) if(width * height >= 512 * 512)
         for (t_int y = 0; y < height; y++) {
 
             t_uchar* src_rowptr = src->rowPtr(y);

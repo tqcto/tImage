@@ -11,7 +11,7 @@ namespace tImage {
 		const t_int width = dst->width();
         const t_int height = dst->height();
 
-		//#pragma omp prallel for
+		#pragma omp parallel for schedule(static) if(width * height >= 512 * 512)
 		for (t_int y = 0; y < height; y++) {
 
             t_uchar* src0_rowptr = src_planes[0].rowPtr(y);
@@ -20,7 +20,7 @@ namespace tImage {
             t_uchar* src3_rowptr = src_planes[3].rowPtr(y);
 			t_uchar* dst_rowptr = dst->rowPtr(y);
 
-			//#pragma omp simd
+			#pragma omp simd
 			for (t_int x = 0; x < width; x++) {
 
 				dst_rowptr[x << 2] = src0_rowptr[x];
