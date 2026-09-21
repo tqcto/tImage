@@ -139,6 +139,8 @@ namespace tImage {
 		/* Get color type of image */
 		//DLL_EXPORT t_colorType colorType() const noexcept;
 
+		DLL_EXPORT t_err fill(t_uchar c);
+
 		DLL_EXPORT t_err RGB2BGR(void);
 		DLL_EXPORT t_err RGBA2BGRA(void);
 		/* convert color channel */

@@ -68,6 +68,7 @@ set(TIMAGE_SOURCES
     src/tool/split.cpp
     src/tool/transpose.cpp
     src/tool/fft.cpp
+    src/proc/intrin_avx.cpp
 )
 
 add_library(tImage ${TIMAGE_SOURCES})

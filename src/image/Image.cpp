@@ -2,6 +2,7 @@
 #include "../../include/manage/manage.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h> // for assert
 #if defined(__AVX2__)
 #include <immintrin.h>
@@ -235,6 +236,16 @@ namespace tImage {
 
 	}
 	*/
+
+	t_err Image::fill(t_uchar c) {
+
+		if (this->empty()) return t_err_MemoryAccessFailed;
+		
+		memset(this->data, c, this->_stride * this->_rows);
+
+		return t_err_None;
+
+	}
 
 	inline t_uint _RGB2BGR(t_uint c) {
 
