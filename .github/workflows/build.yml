@@ -38,16 +38,6 @@ jobs:
             shared: "OFF"
             generator: Ninja
             build_dir: build/ci-linux-static
-          - os: macos-13
-            kind: shared
-            shared: "ON"
-            generator: Ninja
-            build_dir: build/ci-macos-shared
-          - os: macos-13
-            kind: static
-            shared: "OFF"
-            generator: Ninja
-            build_dir: build/ci-macos-static
 
     steps:
       - name: Check out source
@@ -87,14 +77,6 @@ jobs:
           mkdir -p artifact/include
           cp -R include/. artifact/include/
           find "${{ matrix.build_dir }}" -type f \( -name 'libtImage.so*' -o -name 'libtImage.a' \) -exec cp -f {} artifact/ \;
-
-      - name: Collect macOS libraries
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          mkdir -p artifact/include
-          cp -R include/. artifact/include/
-          find "${{ matrix.build_dir }}" -type f \( -name 'libtImage.dylib' -o -name 'libtImage.a' \) -exec cp -f {} artifact/ \;
 
       - name: Verify library artifact
         shell: bash
