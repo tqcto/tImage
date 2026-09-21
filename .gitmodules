@@ -1,3 +1,0 @@
-[submodule "thirdparty/xsimd"]
-	path = thirdparty/xsimd
-	url = https://github.com/openkylin/xsimd.git
