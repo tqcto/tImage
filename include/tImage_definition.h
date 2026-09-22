@@ -6,6 +6,43 @@
 
 namespace tImage {
 
+// MS
+#if defined(_MSC_VER)
+	#define T_MS		1
+#endif
+
+// MINGW32
+#if defined(__MINGW32__)
+	#define T_MINGW32	1
+#endif
+
+/*
+// AVX2
+#if defined(__AVX2__)
+	#define T_AVX2		1
+#endif
+
+// AVX
+#if defined(__AVX__)
+	#define T_AVX		1
+#endif
+
+// SSE2
+#if defined(__SSE2__) || defined(_M_AMD64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
+	#define T_SSE2		1
+#endif
+
+// ARM NEON
+#if defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+	#define T_NEON		1
+#endif
+
+// Wasm SIMD
+#if defined(__wasm_simd128__)
+	#define T_WASM_SIMD	1
+#endif
+*/
+
 #ifndef DLL_EXPORT
 #if defined(_WIN32) && defined(TIMAGE_BUILD_DLL)
 #define DLL_EXPORT __declspec(dllexport)
@@ -52,8 +89,18 @@ typedef struct _t_uintpoint2d {
 
 }t_uintpoint2d;
 
-// for SIMD�i32byte�j
 #define T_IMAGE_DEFAULT_ALIGN	32
+/*
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(__AVX2__)
+#include <immintrin.h>
+// alignment size
+#define T_IMAGE_DEFAULT_ALIGN	alignof(__m256i)//32
+#endif
+#else
+#define T_IMAGE_DEFAULT_ALIGN	alignof(float32x4_t)
+#endif
+*/
 
 	typedef t_uint	t_flags;
 	typedef t_int	t_err;

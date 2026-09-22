@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../tImage_definition.h"
+#include "../../tImage_definition.h"
 
 #include <immintrin.h>
 
 namespace tImage {
+namespace core {
 namespace simd {
 
     struct v_uint8x32 {
@@ -33,5 +34,6 @@ namespace simd {
 
     };
 
+}
 }
 }

@@ -1,5 +1,9 @@
 #pragma once
 #include "../tImage_definition.h"
+
+#include "../core/mem/alloc.h"
+#include "../core/mem/release.h"
+
 #include "../manage/manage.h"
 
 #include <stdlib.h>
@@ -34,7 +38,8 @@ namespace tImage {
             // total bytes
             t_uint64 total_bytes = this->_stride * this->_rows;
 
-            this->data = (T*)malloc(total_bytes);
+            this->data = core::mem::alignedMalloc<T>(total_bytes, this->_align);
+            // this->data = (T*)malloc(total_bytes);
 
             return this->data != nullptr ? t_err_None : t_err_MemoryAllocationFailed;
 
@@ -149,7 +154,8 @@ namespace tImage {
             
             }
 
-            free(this->data);
+            core::mem::alignedFree(this->data);
+            // free(this->data);
             this->data = nullptr;
             this->_external_memory = false;
 

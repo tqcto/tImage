@@ -13,7 +13,7 @@ namespace mem {
     // release aligned memory
     inline void alignedFree(void* ptr) {
 
-        #if defined(_MSC_VER) || defined(__MINGW32__)
+        #if T_MS || T_MINGW32
         
         _aligned_free(ptr);
         

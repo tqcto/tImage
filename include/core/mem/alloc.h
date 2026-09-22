@@ -16,7 +16,7 @@ namespace mem {
         t_uint64 bytes, t_uint64 alignment = alignof(T)
     ) noexcept {
 
-        #if defined(_MSC_VER) || defined(__MINGW32__)
+        #if T_MS || T_MINGW32
         
         return reinterpret_cast<T*>(_aligned_malloc(bytes, alignment));
         

@@ -21,7 +21,8 @@ namespace tImage {
 		// total bytes
 		t_uint64 total_bytes = this->_stride * (t_uint64)this->_rows;
 
-		this->data = (t_uchar*)malloc(total_bytes);
+		this->data = core::mem::alignedMalloc<t_uchar>(total_bytes, this->_align);
+		// this->data = (t_uchar*)malloc(total_bytes);
 
 		return this->data != nullptr ? t_err_None : t_err_MemoryAllocationFailed;
 
