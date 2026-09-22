@@ -547,6 +547,7 @@ void test_fft4Image(void) {
 	};
 
 	// padding
+	calcPaddingSize2d()
 
 	// FFT
 	Matrix<t_float> dst_real(padded_cols, padded_rows);
