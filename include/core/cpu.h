@@ -83,7 +83,8 @@ namespace core {
             // characts in EBX EDX ECX (little endian)
             // ex: if vendor id is GenuineIntel,
             //      then EBX is 0x756e6547, EDX is 0x49656e69, ECX is 0x6c65746e.
-            cpuid_msvc_asmx64(info, 0);
+            get_cpuid(info, 0);
+            // cpuid_msvc_asmx64(info, 0);
 
             constexpr t_int vendor_intel_ebx = 0x756e6547; // uneG
             constexpr t_int vendor_intel_edx = 0x49656e69; // Ieni
