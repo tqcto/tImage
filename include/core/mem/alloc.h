@@ -25,7 +25,7 @@ namespace mem {
         void* p = nullptr;
         posix_memalign(&p, alignment, bytes);
         
-        return p;
+        return reinterpret_cast<T*>(p);
         
         #endif
 
