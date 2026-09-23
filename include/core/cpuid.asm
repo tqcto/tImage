@@ -5,7 +5,7 @@
 
 ; C++: extern "C" void cpuid_msvc_asmx64(int* p, int i)
 ; p -> rcx
-; i -> rdx
+; i -> edx
 public cpuid_msvc_asmx64
 
 cpuid_msvc_asmx64 PROC
