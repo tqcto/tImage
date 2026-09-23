@@ -11,6 +11,9 @@ option(TIMAGE_ENABLE_OPENMP "Enable OpenMP acceleration" ON)
 set(TIMAGE_BUNDLE_STATIC_DEFAULT OFF)
 if(NOT BUILD_SHARED_LIBS AND MSVC)
     set(TIMAGE_BUNDLE_STATIC_DEFAULT ON)
+    add_compile_definitions(T_STATIC_LIB)   # 静的ライブラリビルドならこのマクロ
+else()
+    add_compile_definitions(T_DYNAMIC_LIB)  # 動的ライブラリビルドならこのマクロ
 endif()
 option(TIMAGE_BUNDLE_STATIC_DEPENDENCIES
        "Bundle libpng and zlib into the static tImage library"
@@ -58,6 +61,12 @@ add_subdirectory(thirdparty/libpng)
 # ------------------------------------------------------------------------------
 # 3. tImage ライブラリターゲットの作成
 # ------------------------------------------------------------------------------
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    enable_language(ASM_MASM)
+    set(ASM_SOURCES include/core/cpuid.asm)
+    add_compile_definitions(T_USE_ASM)
+endif()
+
 set(TIMAGE_SOURCES
     src/effect/gaussianBlur.cpp
     src/image/Image.cpp
@@ -70,6 +79,10 @@ set(TIMAGE_SOURCES
     src/tool/padding.cpp
     src/tool/fft.cpp
 )
+
+if(ASM_SOURCES)
+    list(APPEND TIMAGE_SOURCES ${ASM_SOURCES})
+endif()
 
 add_library(tImage ${TIMAGE_SOURCES})
 
@@ -128,6 +141,10 @@ endif()
 # MSVCの場合、libpngヘッダーが要求するデフォルトのライブラリ自動リンク指定を無効化
 if(MSVC)
     target_link_options(tImage PRIVATE "/NODEFAULTLIB:libpng16d.lib" "/NODEFAULTLIB:libpng16.lib")
+
+    if(BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+        target_link_options(tImage PRIVATE "/EXPORT:cpuid_msvc_asmx64")
+    endif()
 endif()
 
 # ------------------------------------------------------------------------------

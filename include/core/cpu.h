@@ -1,6 +1,15 @@
 #pragma once
 #include "../tImage_definition.h"
-#include <stdio.h>
+
+#if defined(T_MS)
+
+#include <intrin.h>
+
+#elif defined(T_GCC)
+
+#include <cpuid.h>
+
+#endif
 
 namespace tImage {
 namespace core {
@@ -32,6 +41,8 @@ namespace core {
     inline void get_cpuid(t_int* p, t_int i) {
         __cpuid(p, i);
     }
+
+    extern "C" DLL_EXPORT void cpuid_msvc_asmx64(t_int* p, t_int i);
 
     // get cpuidex
     inline void get_cpuidex(t_int* p, t_int i, t_int c) {
@@ -72,7 +83,7 @@ namespace core {
             // characts in EBX EDX ECX (little endian)
             // ex: if vendor id is GenuineIntel,
             //      then EBX is 0x756e6547, EDX is 0x49656e69, ECX is 0x6c65746e.
-            get_cpuid(info, 0);
+            cpuid_msvc_asmx64(info, 0);
 
             constexpr t_int vendor_intel_ebx = 0x756e6547; // uneG
             constexpr t_int vendor_intel_edx = 0x49656e69; // Ieni
