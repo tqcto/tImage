@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 
 #include <tImage.h>
+#include <core/cpu.h>
 
 // using in debug
 #include <stdlib.h>
@@ -643,6 +644,9 @@ t_int main(void) {
 	// test_fft4Image();
 
 	test_split_merge();
+
+	core::cpu_info info;
+	printf("vendor:%s\n", info.get().vendor == core::t_cpu_vendor_Intel ? "Intel": "others");
 	
     Image src;
     decodePNG(&src, IMG_PATH);

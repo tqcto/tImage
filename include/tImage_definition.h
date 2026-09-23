@@ -6,15 +6,34 @@
 
 namespace tImage {
 
+/*<***************** This macro is enviroment of compile *****************>*/
+
 // MS
 #if defined(_MSC_VER)
-	#define T_MS		1
+	#define T_MS		_MSC_VER
+#endif
+
+// GCC
+#if defined(__GNUC__)
+	#define T_GCC		__GNUC__
+#endif
+
+// ARM
+#if defined(__CC_ARM)
+	#define T_ARM		__ARMCC_VERSION
 #endif
 
 // MINGW32
 #if defined(__MINGW32__)
 	#define T_MINGW32	1
 #endif
+
+// MING64
+#if defined(__MINGW64__)
+	#define T_MINGW64	1
+#endif
+
+/*\<***************** This macro is enviroment of compile *****************\>*/
 
 /*
 // AVX2
