@@ -63,7 +63,7 @@ add_subdirectory(thirdparty/libpng)
 # ------------------------------------------------------------------------------
 if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     enable_language(ASM_MASM)
-    set(ASM_SOURCES include/core/cpuid.asm)
+    set(ASM_SOURCES include/core/cpuid_msvc_x64.asm)
     add_compile_definitions(T_USE_ASM)
 endif()
 
@@ -143,7 +143,7 @@ if(MSVC)
     target_link_options(tImage PRIVATE "/NODEFAULTLIB:libpng16d.lib" "/NODEFAULTLIB:libpng16.lib")
 
     if(BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-        target_link_options(tImage PRIVATE "/EXPORT:cpuid_msvc_asmx64")
+        target_link_options(tImage PRIVATE "/EXPORT:cpuid_msvc_x64")
     endif()
 endif()
 

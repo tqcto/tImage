@@ -3,12 +3,12 @@
 
 .code
 
-; C++: extern "C" void cpuid_msvc_asmx64(int* p, int i)
+; C++: extern "C" void cpuid_msvc_x64(int* p, int i)
 ; p -> rcx
 ; i -> edx
-public cpuid_msvc_asmx64
+public cpuid_msvc_x64
 
-cpuid_msvc_asmx64 PROC
+cpuid_msvc_x64 PROC
     
     push rbx
     push rsi
@@ -30,6 +30,6 @@ cpuid_msvc_asmx64 PROC
     
     ret
 
-cpuid_msvc_asmx64 ENDP
+cpuid_msvc_x64 ENDP
 
 END

@@ -42,7 +42,7 @@ namespace core {
         __cpuid(p, i);
     }
 
-    extern "C" DLL_EXPORT void cpuid_msvc_asmx64(t_int* p, t_int i);
+    extern "C" DLL_EXPORT void cpuid_msvc_x64(t_int* p, t_int i);
 
     // get cpuidex
     inline void get_cpuidex(t_int* p, t_int i, t_int c) {
@@ -84,7 +84,7 @@ namespace core {
             // ex: if vendor id is GenuineIntel,
             //      then EBX is 0x756e6547, EDX is 0x49656e69, ECX is 0x6c65746e.
             get_cpuid(info, 0);
-            // cpuid_msvc_asmx64(info, 0);
+            // cpuid_msvc_x64(info, 0);
 
             constexpr t_int vendor_intel_ebx = 0x756e6547; // uneG
             constexpr t_int vendor_intel_edx = 0x49656e69; // Ieni
