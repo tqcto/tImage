@@ -5,19 +5,23 @@
 namespace tImage {
 namespace core {
 
+    #define t_CPU_INFO    cpu_info::get()
+
     enum cpu_vendor : t_uint {
 
-        t_cpu_vendor_Intel  = 0,
-        t_cpu_vendor_AMD    = 1 << 0,
+        t_cpu_vendor_Unknown= 0,
+        t_cpu_vendor_Intel  = 1 << 0,
+        t_cpu_vendor_AMD    = 1 << 1,
 
     };
 
     enum cpu_processor : t_uint {
 
-        t_feature_None  = 0,
-        t_feature_AVX   = 1 << 0,
-        t_feature_AVX2  = 1 << 1,
-        t_feature_NEON  = 1 << 2,
+        t_cpu_processor_None  = 0,
+        t_cpu_processor_SSE4  = 1 << 0,
+        t_cpu_processor_AVX   = 1 << 1,
+        t_cpu_processor_AVX2  = 1 << 2,
+        t_cpu_processor_AVX512= 1 << 3,
 
     };
 
@@ -29,8 +33,8 @@ namespace core {
         __cpuid(p, i);
     }
 
-    // get cpuidx
-    inline void get_cpuidx(t_int* p, t_int i, t_int c) {
+    // get cpuidex
+    inline void get_cpuidex(t_int* p, t_int i, t_int c) {
         __cpuidex(p, i, c);
     }
 
@@ -42,8 +46,8 @@ namespace core {
         __cpuid(i, p[0], p[1], p[2], p[3]);
     }
 
-    // get cpuidx
-    inline void get_cpuidx(t_int* p, t_int i, t_int c) {
+    // get cpuidex
+    inline void get_cpuidex(t_int* p, t_int i, t_int c) {
         __cpuid_count(i, c, p[0], p[1], p[2], p[3]);
     }
 

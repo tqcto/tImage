@@ -645,8 +645,7 @@ t_int main(void) {
 
 	test_split_merge();
 
-	core::cpu_info info;
-	printf("vendor:%s\n", info.get().vendor == core::t_cpu_vendor_Intel ? "Intel": "others");
+	printf("vendor:%s\n", core::t_CPU_INFO.vendor == core::t_cpu_vendor_Intel ? "Intel": "others");
 	
     Image src;
     decodePNG(&src, IMG_PATH);
