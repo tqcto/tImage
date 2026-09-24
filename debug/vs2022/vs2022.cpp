@@ -646,7 +646,12 @@ t_int main(void) {
 	test_split_merge();
 
 	printf("vendor:%s\n", core::t_CPU_INFO.vendor == core::t_cpu_vendor_Intel ? "Intel": "others");
-	
+	printf("processors:\n");
+	printf("SSE4_2 : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_SSE4_2);
+	printf("AVX : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX);
+	printf("AVX2 : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX2);
+	printf("AVX512f : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX512f);
+
     Image src;
     decodePNG(&src, IMG_PATH);
 

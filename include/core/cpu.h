@@ -26,11 +26,17 @@ namespace core {
 
     enum cpu_processor : t_uint {
 
-        t_cpu_processor_None  = 0,
-        t_cpu_processor_SSE4  = 1 << 0,
-        t_cpu_processor_AVX   = 1 << 1,
-        t_cpu_processor_AVX2  = 1 << 2,
-        t_cpu_processor_AVX512= 1 << 3,
+        t_cpu_processor_None    = 0,
+        t_cpu_processor_SSE     = 1 << 0,
+        t_cpu_processor_SSE2    = 1 << 1,
+        t_cpu_processor_SSE3    = 1 << 2,
+        t_cpu_processor_SSSE3   = 1 << 3,
+        t_cpu_processor_SSE4_1  = 1 << 4,
+        t_cpu_processor_SSE4_2  = 1 << 5,
+        t_cpu_processor_AVX     = 1 << 6,
+        t_cpu_processor_AVX2    = 1 << 7,
+        t_cpu_processor_AVX512f = 1 << 8,
+        t_cpu_processor_AVX512dq= 1 << 9,
 
     };
 
@@ -68,9 +74,9 @@ namespace core {
     struct cpu_info {
 
         cpu_vendor vendor;
-        cpu_processor processor;
+        t_uint processor;
 
-        cpu_info() {
+        cpu_info() : vendor{t_cpu_vendor_Unknown}, processor{t_cpu_processor_None} {
 
             // array of information
             // info[0] = EAX
@@ -78,6 +84,11 @@ namespace core {
             // info[2] = ECX
             // info[3] = EDX
             t_int info[4] = {0};
+
+            constexpr t_int EAX = 0;
+            constexpr t_int EBX = 1;
+            constexpr t_int ECX = 2;
+            constexpr t_int EDX = 3;
 
             // get vendor
             // characts in EBX EDX ECX (little endian)
@@ -107,6 +118,63 @@ namespace core {
                 && info[3] == vendor_amd_edx
             ) {
                 this->vendor = t_cpu_vendor_AMD;
+            }
+            else {
+                this->vendor = t_cpu_vendor_Unknown;
+            }
+        
+            // get processors
+            get_cpuid(info, 1);
+
+            // SSE
+            if (info[EDX] & (1 << 25)) {
+                this->processor |= t_cpu_processor_SSE;
+            }
+            // SSE2
+            if (info[EDX] & (1 << 26)) {
+                this->processor |= t_cpu_processor_SSE2;
+            }
+            // SSE3
+            if (info[ECX] == 0) {
+                this->processor |= t_cpu_processor_SSE3;
+            }
+            // SSSE3
+            if (info[ECX] & (1 << 9)) {
+                this->processor |= t_cpu_processor_SSSE3;
+            }
+            // SSE4.1
+            if (info[ECX] & (1 << 19)) {
+                this->processor |= t_cpu_processor_SSE4_1;
+            }
+            // SSE4.2
+            if (info[ECX] & (1 << 20)) {
+                this->processor |= t_cpu_processor_SSE4_2;
+            }
+
+            const bool os_supports_avx =
+                (info[ECX] & (1 << 27))
+                && (info[ECX] & (1 << 28)
+            );
+
+            // AVX
+            if (os_supports_avx) {
+                this->processor |= t_cpu_processor_AVX;
+            }
+
+            // get extensions
+            get_cpuidex(info, 7, 0);
+
+            // AVX2
+            if (os_supports_avx && (info[EBX] & (1 << 5))) {
+                this->processor |= t_cpu_processor_AVX2;
+            }
+            // AVX512-f
+            if (os_supports_avx && (info[EBX] & (1 << 16))) {
+                this->processor |= t_cpu_processor_AVX512f;
+            }
+            // AVX512-dq
+            if (os_supports_avx && (info[EBX] & (1 << 17))) {
+                this->processor |= t_cpu_processor_AVX512dq;
             }
 
         }

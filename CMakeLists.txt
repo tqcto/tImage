@@ -63,7 +63,7 @@ add_subdirectory(thirdparty/libpng)
 # ------------------------------------------------------------------------------
 if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     enable_language(ASM_MASM)
-    set(ASM_SOURCES include/core/cpuid_msvc_x64.asm)
+    set(ASM_SOURCES src/core/cpuid_msvc_x64.asm)
     add_compile_definitions(T_USE_ASM)
 endif()
 
