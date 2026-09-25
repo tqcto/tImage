@@ -2,6 +2,9 @@
 
 #include <tImage.h>
 #include <core/cpu.h>
+#include <core/mem/align.h>
+#include <core/simd/intrin_ssse3.h>
+#include <core/simd/intrin_avx.h>
 
 // using in debug
 #include <stdlib.h>
@@ -627,6 +630,68 @@ void test_split_merge(void) {
 
 }
 
+void test_avx(void) {
+
+	t_uchar* src = core::mem::alignedMalloc<t_uchar>(sizeof(t_uchar) * 32, 32);
+	t_uchar* dst = core::mem::alignedMalloc<t_uchar>(sizeof(t_uchar) * 32, 32);
+
+	for (t_int i = 0; i < 32; i++) {
+		src[i] = (t_int)i;
+		dst[i] = 0xFF;
+	}
+
+	printf("src is %s\ndst is %s\n", core::mem::check_align(src, 32) ? "aligned" : "not aligned", core::mem::check_align(dst, 32) ? "aligned" : "not aligned");
+
+	core::simd::v_uint8x32 mem;
+	core::simd::v256_load_8x32(src, mem);
+
+	core::simd::v256_store_8x32(mem, dst);
+
+	for (t_int i = 0; i < 32; i++) {
+		printf("%x, ", dst[i]);
+	}
+	printf("\n");
+
+}
+
+void test_RGBA2BGRA(Image* src, Image* dst) {
+
+	const t_int width = src->width();
+	const t_int height = src->height();
+
+	const t_int loop_count = src->elementsRow() >> 5;
+
+	core::simd::v_uint8x32 src_data;
+	core::simd::v_uint8x32 mask(
+		2, 1, 0, 3,
+		6, 5, 4, 7,
+		10, 9, 8, 11,
+		14, 13, 12, 15,
+		18, 17, 16, 19,
+		22, 21, 20, 23,
+		26, 25, 24, 27,
+		30, 29, 28, 31
+	);
+	
+	for (t_int y = 0; y < height; y++) {
+
+		auto src_rowptr = src->rowPtr(y);
+		auto dst_rowptr = dst->rowPtr(y);
+
+		for (t_int x = 0; x < loop_count; x++) {
+			
+			core::simd::v256_load_8x32(&src_rowptr[x << 5], src_data);
+
+			core::simd::v256_shuffle_8x32(src_data, src_data, mask);
+
+			core::simd::v256_store_8x32(src_data, &dst_rowptr[x << 5]);
+
+		}
+
+	}
+
+}
+
 t_int main(void) {
 
 	//test_Matrix();
@@ -652,13 +717,21 @@ t_int main(void) {
 	printf("AVX2 : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX2);
 	printf("AVX512f : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX512f);
 
-    Image src;
+    Image src, dst;
     decodePNG(&src, IMG_PATH);
+	dst.allocate(src.width(), src.height(), src.channels());
+
+	if (core::t_CPU_INFO.processor & core::t_cpu_processor_AVX) {
+
+		test_avx();
+		test_RGBA2BGRA(&src, &dst);
+
+	}
 
 	// ImageクラスをFFT用パディングにするのはユーザー側が指示する．
 	// メモリ管理領域が外部の可能性を考慮すると，パディングによるデータ領域の新たな確保が必要なため．
 
-    encodePNG(&src, "test.png");
+    encodePNG(&dst, "test.png");
     
     return 0;
 

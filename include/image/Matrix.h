@@ -3,6 +3,7 @@
 
 #include "../core/mem/alloc.h"
 #include "../core/mem/release.h"
+#include "../core/mem/align.h"
 
 #include "../manage/manage.h"
 
@@ -43,6 +44,10 @@ namespace tImage {
 
             return this->data != nullptr ? t_err_None : t_err_MemoryAllocationFailed;
 
+        }
+
+        inline t_bool is_aligned(void) const noexcept {
+            return core::mem::check_align(this->data, this->align);
         }
 
 	public:
