@@ -654,44 +654,6 @@ void test_avx(void) {
 
 }
 
-void test_RGBA2BGRA(Image* src, Image* dst) {
-
-	const t_int width = src->width();
-	const t_int height = src->height();
-
-	const t_int loop_count = src->elementsRow() >> 5;
-
-	core::simd::v_uint8x32 src_data;
-	core::simd::v_uint8x32 mask(
-		2, 1, 0, 3,
-		6, 5, 4, 7,
-		10, 9, 8, 11,
-		14, 13, 12, 15,
-		18, 17, 16, 19,
-		22, 21, 20, 23,
-		26, 25, 24, 27,
-		30, 29, 28, 31
-	);
-	
-	for (t_int y = 0; y < height; y++) {
-
-		auto src_rowptr = src->rowPtr(y);
-		auto dst_rowptr = dst->rowPtr(y);
-
-		for (t_int x = 0; x < loop_count; x++) {
-			
-			core::simd::v256_load_8x32(&src_rowptr[x << 5], src_data);
-
-			core::simd::v256_shuffle_8x32(src_data, src_data, mask);
-
-			core::simd::v256_store_8x32(src_data, &dst_rowptr[x << 5]);
-
-		}
-
-	}
-
-}
-
 t_int main(void) {
 
 	//test_Matrix();
@@ -724,9 +686,12 @@ t_int main(void) {
 	if (core::t_CPU_INFO.processor & core::t_cpu_processor_AVX) {
 
 		test_avx();
-		test_RGBA2BGRA(&src, &dst);
 
 	}
+
+	printf("start.\n");
+	swap(&src, &dst);
+	printf("finish.\n");
 
 	// ImageクラスをFFT用パディングにするのはユーザー側が指示する．
 	// メモリ管理領域が外部の可能性を考慮すると，パディングによるデータ領域の新たな確保が必要なため．

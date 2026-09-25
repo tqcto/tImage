@@ -15,6 +15,7 @@
 #include "tool/converter.h"
 #include "tool/split.h"
 #include "tool/merge.h"
+#include "tool/swap.h"
 #include "tool/transpose.h"
 #include "tool/padding.h"
 #include "tool/fft.h"

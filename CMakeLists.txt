@@ -75,6 +75,7 @@ set(TIMAGE_SOURCES
     src/tool/converter.cpp
     src/tool/merge.cpp
     src/tool/split.cpp
+    src/tool/swap.cpp
     src/tool/transpose.cpp
     src/tool/padding.cpp
     src/tool/fft.cpp

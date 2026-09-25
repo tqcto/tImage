@@ -44,7 +44,7 @@ namespace simd {
         _mm_store_si128(reinterpret_cast<__m128i*>(dst), src.v);
     }
     // store 128 bit register to unaligned 8x16 bit integer
-    inline void v256_store_8x32(v_uint8x16& src, t_uchar* dst) {
+    inline void v128_store_8x16(v_uint8x16& src, t_uchar* dst) {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dst), src.v);
     }
     /*\<******************************************* store *******************************************\>*/

@@ -46,10 +46,6 @@ namespace tImage {
 
         }
 
-        inline t_bool is_aligned(void) const noexcept {
-            return core::mem::check_align(this->data, this->align);
-        }
-
 	public:
 
 		// image data
@@ -99,6 +95,10 @@ namespace tImage {
             this->_align = align;
             return t_err_None;
 
+        }
+
+        inline t_bool is_aligned(void) const noexcept {
+            return core::mem::check_align(this->data, this->align);
         }
 
 		/* Input image of other memory*/
