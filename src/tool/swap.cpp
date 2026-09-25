@@ -19,7 +19,7 @@ namespace tImage {
 
             const t_int loop_count = src->elementsRow() >> 5;
 
-            core::simd::v_uint8x32 mask(
+            const core::simd::v_uint8x32 mask(
                 2, 1, 0, 3,
                 6, 5, 4, 7,
                 10, 9, 8, 11,
@@ -56,7 +56,7 @@ namespace tImage {
 
             const t_int loop_count = src->elementsRow() >> 2;
 
-            core::simd::v_uint8x16 mask(
+            const core::simd::v_uint8x16 mask(
                 2, 1, 0, 3,
                 6, 5, 4, 7,
                 10, 9, 8, 11,

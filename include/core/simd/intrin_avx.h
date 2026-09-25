@@ -57,7 +57,7 @@ namespace simd {
 
     /*<******************************************* shuffle *******************************************>*/
     // shuffle 256 bit register by mask
-    inline void v256_shuffle_8x32(v_uint8x32& src, v_uint8x32& dst, v_uint8x32& mask) {
+    inline void v256_shuffle_8x32(v_uint8x32& src, v_uint8x32& dst, const v_uint8x32& mask) {
         dst.v = _mm256_shuffle_epi8(src.v, mask.v);
     }
     /*\<******************************************* shuffle *******************************************\>*/
