@@ -77,6 +77,8 @@ set(TIMAGE_SOURCES
     src/image/Image.cpp
     src/image/MatrixConverter.cpp
     src/manage/manage.cpp
+    src/core/codec/png.cpp
+    src/core/codec/jpeg.cpp
     src/tool/converter.cpp
     src/tool/merge.cpp
     src/tool/split.cpp

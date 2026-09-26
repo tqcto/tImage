@@ -19,14 +19,15 @@ namespace tImage {
 	typedef enum {
 
 		/* gray scale */
-		t_colorType_GrayScale		= 1L << 0L,
+		t_colorType_GrayScale		= 0,
+		t_colorType_GrayScaleAlpha	= 1L << 0L,
 		
 		/* 3 channels */
 		
 		t_colorType_RGB				= 1L << 1L,
 		t_colorType_BGR				= 1L << 2L,
 		t_colorType_YUV				= 1L << 3L,
-		t_colorType_YCbBr			= 1L << 4L,
+		t_colorType_YCbCr			= 1L << 4L,
 
 		/* +alpha channel */
 

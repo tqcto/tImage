@@ -1,5 +1,8 @@
 #include "../../include/image/Image.h"
-#include "../../include/manage/manage.h"
+
+#include "../../include/core/codec/codec.h"
+#include "../../include/core/codec/png.h"
+#include "../../include/core/codec/jpeg.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -399,25 +402,25 @@ namespace tImage {
 
 		if (!dst->empty())	dst->release();
 
-		t_ImageFile_Header in_data;
-		t_err err = readPNG(&in_data, filepath);
+		core::codec::t_ImageFile_Header in_data;
+		t_err err = core::codec::readPNG(&in_data, filepath);
 		if (err != t_err_None) return err;
 
 		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.depth);
 		if (err != t_err_None) return err;
 
 		in_data.stride = dst->stride();
-		return decodePNG(&in_data, dst->data, filepath);
+		return core::codec::decodePNG(&in_data, dst->data, filepath);
 
 	}
 	t_err encodePNG(Image* src, const char* filepath) {
 
 		if (src->empty()) return t_err_InvalidArgument;
 
-		t_ImageFile_Header in_data = {
+		core::codec::t_ImageFile_Header in_data = {
 			src->width(), src->height(), src->stride(), src->channels(), src->depth()
 		};
-		return writePNG(&in_data, src->data, filepath);
+		return core::codec::writePNG(&in_data, src->data, filepath);
 
 	}
 
@@ -425,24 +428,24 @@ namespace tImage {
 		if (dst == nullptr || filepath == nullptr) return t_err_InvalidArgument;
 		if (!dst->empty()) dst->release();
 
-		t_ImageFile_Header in_data = {};
-		t_err err = readJPEG(&in_data, filepath);
+		core::codec::t_ImageFile_Header in_data = {};
+		t_err err = core::codec::readJPEG(&in_data, filepath);
 		if (err != t_err_None) return err;
 
 		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.depth);
 		if (err != t_err_None) return err;
 
 		in_data.stride = dst->stride();
-		return decodeJPEG(&in_data, dst->data, filepath);
+		return core::codec::decodeJPEG(&in_data, dst->data, filepath);
 	}
 
 	t_err encodeJPEG(Image* src, const char* filepath) {
 		if (src == nullptr || src->empty()) return t_err_InvalidArgument;
 
-		t_ImageFile_Header in_data = {
+		core::codec::t_ImageFile_Header in_data = {
 			src->width(), src->height(), src->stride(), src->channels(), src->depth()
 		};
-		return writeJPEG(&in_data, src->data, filepath);
+		return core::codec::writeJPEG(&in_data, src->data, filepath);
 	}
 
 }
