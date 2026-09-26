@@ -73,12 +73,17 @@ if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 set(TIMAGE_SOURCES
+
     src/effect/gaussianBlur.cpp
+
     src/image/Image.cpp
     src/image/MatrixConverter.cpp
-    src/manage/manage.cpp
+
+    src/core/stride.cpp
+
     src/core/codec/png.cpp
     src/core/codec/jpeg.cpp
+
     src/tool/converter.cpp
     src/tool/merge.cpp
     src/tool/split.cpp
@@ -86,6 +91,7 @@ set(TIMAGE_SOURCES
     src/tool/transpose.cpp
     src/tool/padding.cpp
     src/tool/fft.cpp
+
 )
 
 if(ASM_SOURCES)

@@ -2,6 +2,8 @@
 #include "../../include/tool/transpose.h"
 #include "../../include/tool/padding.h"
 
+#include "../../include/core/stride.h"
+
 //#include <bit>		// C++20
 //#include <numbers>	// C++20
 #include <cmath>
@@ -664,14 +666,14 @@ namespace tImage {
         this->horizon_index_buffer_size = this->horizon_rot_buffer_size * size_div;
         
         // 縦方向の回転因子用バッファサイズの計算
-        this->vertical_rot_buffer_size = calcStride4Matrix(
+        this->vertical_rot_buffer_size = core::calcStride4Matrix(
             this->fft_src_real->rows(),
             sizeof(t_float),
             this->fft_src_real->align()
         );
 
         // 縦方向のビット反転用インデックステーブル用バッファサイズの計算
-        this->vertical_index_buffer_size = calcStride4Matrix(
+        this->vertical_index_buffer_size = core::calcStride4Matrix(
             this->fft_src_real->rows(),
             sizeof(t_int),
             this->fft_src_real->align()
@@ -679,7 +681,7 @@ namespace tImage {
 
         // 転置用行列バッファサイズの計算
         // ストライドを計算
-        const t_uint64 tmp_stride = calcStride4Matrix(
+        const t_uint64 tmp_stride = core::calcStride4Matrix(
             this->fft_src_real->rows(), sizeof(t_float), this->fft_src_real->align()
         );
         // 計算用に1行多めにメモリをとる

@@ -11,7 +11,7 @@ namespace tImage {
 
         if (src->empty()) return 0;
 
-        const t_uint64 stride = calcStride4Matrix(src->width(), sizeof(T), src->align());
+        const t_uint64 stride = core::calcStride4Matrix(src->width(), sizeof(T), src->align());
 
         return stride * static_cast<t_uint64>(src->height());
 

@@ -1,5 +1,6 @@
 #include "../../include/image/Image.h"
 
+#include "../../include/core/stride.h"
 #include "../../include/core/codec/codec.h"
 #include "../../include/core/codec/png.h"
 #include "../../include/core/codec/jpeg.h"
@@ -16,7 +17,7 @@ namespace tImage {
 	t_err Image::_allocate_memory() {
 
 		// calc stride
-		this->_stride = calcStride(this->_cols, this->format.channels, this->depth(), this->_align);
+		this->_stride = core::calcStride(this->_cols, this->format.channels, this->depth(), this->_align);
 
 		// calc elements of a row
 		this->_elements_row = this->_stride / sizeof(t_uchar);
@@ -138,7 +139,7 @@ namespace tImage {
 		err |= this->setAlign(align);
 		if (err != t_err_None) return err;
 
-		this->_stride = calcStride(width, channels, depth, _align);
+		this->_stride = core::calcStride(width, channels, depth, _align);
 		this->_elements_row = this->_stride / sizeof(t_uchar);
 
 		this->data = src;

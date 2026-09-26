@@ -1,18 +1,11 @@
-#include "../../include/manage/manage.h"
+#include "../../include/core/stride.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
-#include <setjmp.h>
-
-#include <png.h>
-#include <jpeglib.h>
-
-#define SIGNATURE_NUM	8
 
 namespace tImage {
+namespace core {
 
-	t_uint64 calcStride4Matrix(t_uint cols, t_uint64 size, t_uint align) {
+    t_uint64 calcStride4Matrix(t_uint cols, t_uint64 size, t_uint align) {
 
 		// check align
 		assert((align & (align - 1)) == 0);
@@ -54,4 +47,5 @@ namespace tImage {
 
 	}
 
+}
 }
