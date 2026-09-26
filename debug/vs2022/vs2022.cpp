@@ -661,6 +661,7 @@ void test_jpeg(void) {
 	decodeJPEG(&src, IMG_PATH_JPG);
 
 	encodeJPEG(&src, "test.jpg");
+	encodePNG(&src, "test_jpg2.png");
 
 }
 

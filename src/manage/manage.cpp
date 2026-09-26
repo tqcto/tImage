@@ -213,13 +213,26 @@ namespace tImage {
 		png_infop info = png_create_info_struct(png);
 
 		png_byte type;
-		if (in_data->channels == 3) {
+		switch (in_data->channels)
+		{
+		// grayscale
+		case 1:
+			type = PNG_COLOR_TYPE_GRAY;
+			break;
+		// grayscale + alpha
+		case 2:
+			type = PNG_COLOR_TYPE_GRAY_ALPHA;
+			break;
+		// rgb
+		case 3:
 			type = PNG_COLOR_TYPE_RGB;
-		}
-		else if (in_data->channels == 4) {
-			type = PNG_COLOR_TYPE_RGBA;
-		}
-		else {
+			break;
+		// rgba
+		case 4:
+			type = PNG_COLOR_TYPE_RGB_ALPHA;
+			break;
+		
+		default:
 			printf("channel num is invalid!!\n");
 			png_destroy_write_struct(&png, &info);
 			fclose(fp);
