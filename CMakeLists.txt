@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(tImage CXX)
+project(tImage C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,7 @@ else()
     add_compile_definitions(T_DYNAMIC_LIB)  # 動的ライブラリビルドならこのマクロ
 endif()
 option(TIMAGE_BUNDLE_STATIC_DEPENDENCIES
-       "Bundle libpng and zlib into the static tImage library"
+    "Bundle libpng, libjpeg, and zlib into the static tImage library"
        ${TIMAGE_BUNDLE_STATIC_DEFAULT})
 
 # Linuxなどで静的なlibpng/zlibを共有ライブラリへ組み込むために、
@@ -59,7 +59,12 @@ set(PNG_TOOLS OFF CACHE BOOL "Build libpng tools" FORCE)
 add_subdirectory(thirdparty/libpng)
 
 # ------------------------------------------------------------------------------
-# 3. tImage ライブラリターゲットの作成
+# 3. libjpeg (thirdparty) の設定
+# ------------------------------------------------------------------------------
+add_subdirectory(thirdparty/libjpeg)
+
+# ------------------------------------------------------------------------------
+# 4. tImage ライブラリターゲットの作成
 # ------------------------------------------------------------------------------
 if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     enable_language(ASM_MASM)
@@ -91,6 +96,7 @@ add_library(tImage ${TIMAGE_SOURCES})
 target_include_directories(tImage 
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libpng
+            ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libjpeg
             ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zlib
             ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/zlib
             ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/libpng
@@ -113,10 +119,11 @@ endif()
 # MSVCの統合静的ビルドでは、依存オブジェクトをtImage.libへ取り込むため、
 # 利用側へ同じライブラリを再度渡さない。
 if(NOT BUILD_SHARED_LIBS AND MSVC AND TIMAGE_BUNDLE_STATIC_DEPENDENCIES)
-    add_dependencies(tImage png_static zlibstatic)
+    add_dependencies(tImage png_static jpeg_static zlibstatic)
 else()
     target_link_libraries(tImage PRIVATE
         png_static
+        jpeg_static
         zlibstatic
     )
 endif()
@@ -130,6 +137,7 @@ if(NOT BUILD_SHARED_LIBS AND MSVC AND TIMAGE_BUNDLE_STATIC_DEPENDENCIES)
                 "/OUT:$<TARGET_FILE:tImage>.merged.lib"
                 "$<TARGET_FILE:tImage>"
                 "$<TARGET_FILE:png_static>"
+                "$<TARGET_FILE:jpeg_static>"
                 "$<TARGET_FILE:zlibstatic>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "$<TARGET_FILE:tImage>.merged.lib"
@@ -149,7 +157,7 @@ if(MSVC)
 endif()
 
 # ------------------------------------------------------------------------------
-# 4. デバッグ用実行ファイル (tImage_debug)
+# 5. デバッグ用実行ファイル (tImage_debug)
 # ------------------------------------------------------------------------------
 if(NOT EMSCRIPTEN)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/debug/main.cpp")

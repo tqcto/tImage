@@ -9,7 +9,8 @@
 // using in debug
 #include <stdlib.h>
 
-#define IMG_PATH "..\\..\\..\\img.png"
+#define IMG_PATH_PNG "..\\..\\..\\img.png"
+#define IMG_PATH_JPG "..\\..\\..\\img.jpg"
 
 using namespace tImage;
 
@@ -537,7 +538,7 @@ void gs3(Image* src, Image* dst) {
 // void test_fft4Image(void) {
 
 // 	Image input;
-// 	if (decodePNG(&input, IMG_PATH) != t_err_None) {
+// 	if (decodePNG(&input, IMG_PATH_PNG) != t_err_None) {
 // 		return;
 // 	}
 
@@ -610,7 +611,7 @@ void gs3(Image* src, Image* dst) {
 void test_split_merge(void) {
 
 	Image input;
-	if (decodePNG(&input, IMG_PATH) != t_err_None) {
+	if (decodePNG(&input, IMG_PATH_PNG) != t_err_None) {
 		return;
 	}
 
@@ -654,6 +655,15 @@ void test_avx(void) {
 
 }
 
+void test_jpeg(void) {
+
+	Image src;
+	decodeJPEG(&src, IMG_PATH_JPG);
+
+	encodeJPEG(&src, "test.jpg");
+
+}
+
 t_int main(void) {
 
 	//test_Matrix();
@@ -679,8 +689,10 @@ t_int main(void) {
 	printf("AVX2 : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX2);
 	printf("AVX512f : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX512f);
 
+	test_jpeg();
+
     Image src, dst;
-    decodePNG(&src, IMG_PATH);
+    decodePNG(&src, IMG_PATH_PNG);
 	dst.allocate(src.width(), src.height(), src.channels());
 
 	if (core::t_CPU_INFO.processor & core::t_cpu_processor_AVX) {

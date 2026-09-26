@@ -421,4 +421,28 @@ namespace tImage {
 
 	}
 
+	t_err decodeJPEG(Image* dst, const char* filepath) {
+		if (dst == nullptr || filepath == nullptr) return t_err_InvalidArgument;
+		if (!dst->empty()) dst->release();
+
+		t_ImageFile_Header in_data = {};
+		t_err err = readJPEG(&in_data, filepath);
+		if (err != t_err_None) return err;
+
+		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.depth);
+		if (err != t_err_None) return err;
+
+		in_data.stride = dst->stride();
+		return decodeJPEG(&in_data, dst->data, filepath);
+	}
+
+	t_err encodeJPEG(Image* src, const char* filepath) {
+		if (src == nullptr || src->empty()) return t_err_InvalidArgument;
+
+		t_ImageFile_Header in_data = {
+			src->width(), src->height(), src->stride(), src->channels(), src->depth()
+		};
+		return writeJPEG(&in_data, src->data, filepath);
+	}
+
 }

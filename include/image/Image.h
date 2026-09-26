@@ -157,5 +157,7 @@ namespace tImage {
 
 	DLL_EXPORT t_err decodePNG(Image* dst, const char* filepath);
 	DLL_EXPORT t_err encodePNG(Image* src, const char* filepath);
+	DLL_EXPORT t_err decodeJPEG(Image* dst, const char* filepath);
+	DLL_EXPORT t_err encodeJPEG(Image* src, const char* filepath);
 
 }

@@ -78,7 +78,7 @@ cmake --build build/vs2022-static --config Release --target tImage
 
 DLL をビルドする場合は，構成時の `-DBUILD_SHARED_LIBS=OFF` を `-DBUILD_SHARED_LIBS=ON` に変更する．
 
-静的ビルドでは，MSVC用の `x64-Debug-Static`／`x64-Release-Static` 構成により，libpng と zlib のオブジェクトを `tImage.lib` に取り込む．そのため利用側は `tImage.lib` だけをリンクすればよく，`z.dll`，`libpng16_static.lib`，`zs.lib` を配置・指定する必要はない．Visual Studio コンソールアプリケーションで利用する例は `debug/static` にあるので適宜参照されたい．
+静的ビルドでは，MSVC用の `x64-Debug-Static`／`x64-Release-Static` 構成により，libpng，libjpeg，zlib のオブジェクトを `tImage.lib` に取り込む．そのため利用側は `tImage.lib` だけをリンクすればよい．Visual Studio コンソールアプリケーションで利用する例は `debug/static` にあるので適宜参照されたい．
 
 Visual Studio のフォルダーを開く構成以外で同じ動作にする場合は，次のオプションを指定する．
 
@@ -93,3 +93,13 @@ Visual Studio のフォルダーを開く構成以外で同じ動作にする場
 - zlib
 - libpng
 - libjpeg
+
+## JPEG画像の入出力
+
+`Image` の `decodeJPEG`／`encodeJPEG` でJPEG画像を読み書きできる．読み込みは8-bitのグレースケールまたはRGB画像に対応し，書き込みは1チャンネルまたは3チャンネルの8-bit画像に対応する．JPEGにはアルファチャンネルがなく，書き込み品質は90に設定される．
+
+```cpp
+tImage::Image image;
+tImage::decodeJPEG(&image, "input.jpg");
+tImage::encodeJPEG(&image, "output.jpg");
+```
