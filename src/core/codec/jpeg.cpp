@@ -54,6 +54,7 @@ namespace codec {
 		jpeg_header->width = static_cast<t_uint>(cinfo.image_width);
 		jpeg_header->height = static_cast<t_uint>(cinfo.image_height);
 		jpeg_header->channels = cinfo.jpeg_color_space == JCS_GRAYSCALE ? 1 : 3;
+		jpeg_header->colorType = cinfo.jpeg_color_space == JCS_GRAYSCALE ? t_colorType_GrayScale : t_colorType_RGB;
 		jpeg_header->depth = 8;
 		jpeg_destroy_decompress(&cinfo);
 		fclose(fp);
@@ -116,9 +117,15 @@ namespace codec {
 	}
 
 	t_err writeJPEG(t_ImageFile_Header* in_data, t_uchar* src, const char* filepath) {
+		
+		const t_bool checkColorTpye =
+		 in_data->colorType == t_colorType_GrayScale
+		 || in_data->colorType == t_colorType_RGB
+		 || in_data->colorType == t_colorType_YCbCr;
+		
 		if (in_data == nullptr || src == nullptr || filepath == nullptr ||
 			!in_data->width || !in_data->height || in_data->depth != 8 ||
-			(in_data->channels != 1 && in_data->channels != 3) ||
+			checkColorTpye ||
 			in_data->stride < static_cast<t_uint64>(in_data->width) * in_data->channels) {
 			return t_err_InvalidArgument;
 		}
@@ -143,8 +150,23 @@ namespace codec {
 		jpeg_stdio_dest(&cinfo, fp);
 		cinfo.image_width = in_data->width;
 		cinfo.image_height = in_data->height;
-		cinfo.input_components = static_cast<int>(in_data->channels);
-		cinfo.in_color_space = in_data->channels == 1 ? JCS_GRAYSCALE : JCS_RGB;
+		cinfo.input_components = static_cast<t_int>(in_data->channels);
+
+		switch (in_data->colorType)
+		{
+		case t_colorType_GrayScale:
+			cinfo.in_color_space = JCS_GRAYSCALE;
+			break;
+		case t_colorType_RGB:
+			cinfo.in_color_space = JCS_RGB;
+			break;
+		case t_colorType_YCbCr:
+			cinfo.in_color_space = JCS_YCbCr;
+		
+		default:
+			break;
+		}
+		// cinfo.in_color_space = in_data->channels == 1 ? JCS_GRAYSCALE : JCS_RGB;
 		jpeg_set_defaults(&cinfo);
 		jpeg_set_quality(&cinfo, 90, TRUE);
 		jpeg_start_compress(&cinfo, TRUE);

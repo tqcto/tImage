@@ -1,5 +1,6 @@
 #include "../../include/tool/swap.h"
 #include "../../include/core/cpu.h"
+#include "../../include/core/codec/codec.h"
 #include "../../include/core/simd/intrin_avx.h"
 #include "../../include/core/simd/intrin_ssse3.h"
 
@@ -11,6 +12,21 @@ namespace tImage {
     inline t_bool check_big_align(t_uint mem_align, t_uint check_align) {
         return mem_align & (mem_align - 1) &&  mem_align > check_align;
     }
+
+    inline t_uint swap3_pixel(t_uint c) {
+
+		return	(	c & 0x00FF00u)	|           // G
+				((	c & 0xFF0000u) >> 16) |     // R
+				((	c & 0x0000FFu) << 16);      // B
+
+	}
+    inline t_uint swap4_pixel(t_uint c) {
+
+		return	(	c & 0xFF00FF00u)	|       // A, G
+				((	c & 0x00FF0000u) >> 16) |   // R
+				((	c & 0x000000FFu) << 16);    // B
+
+	}
 
     inline void swap3(Image* src, Image* dst) {
 
@@ -69,11 +85,11 @@ namespace tImage {
                 for (t_int x = 0; x < width; x++) {
 
                     const t_int i = x * 3;
+                    const t_int* srcPixelPtr = reinterpret_cast<t_int*>(&src_rowptr[i]);
+                    t_int* dstPixelPtr = reinterpret_cast<t_int*>(&dst_rowptr[i]);
 
-                    dst_rowptr[i] = src_rowptr[i + 2];
-                    dst_rowptr[i + 1] = src_rowptr[i + 1];
-                    dst_rowptr[i + 2] = src_rowptr[i];
-
+                    *dstPixelPtr = swap3_pixel(*srcPixelPtr);
+                    
                 }
 
             }
@@ -173,32 +189,37 @@ namespace tImage {
                 for (t_int x = 0; x < width; x++) {
 
                     const t_int i = x << 2;
+                    const t_int* srcPixelPtr = reinterpret_cast<t_int*>(&src_rowptr[i]);
+                    t_int* dstPixelPtr = reinterpret_cast<t_int*>(&dst_rowptr[i]);
 
-                    dst_rowptr[i] = src_rowptr[i + 2];
-                    dst_rowptr[i + 1] = src_rowptr[i + 1];
-                    dst_rowptr[i + 2] = src_rowptr[i];
-                    dst_rowptr[i + 3] = src_rowptr[i + 3];
-
+                    *dstPixelPtr = swap4_pixel(*srcPixelPtr);
+                    
                 }
-
+                
             }
 
         }
 
     }
 
-    t_err swap(Image* src, Image* dst) {
+    t_err swap(Image* src, Image* dst) noexcept {
 
         if (src->channels() != dst->channels()) return t_err_InvalidArgument;
 
-        switch (src->channels())
+        core::codec::t_colorType srcColorType = src->colorType();
+
+        switch (srcColorType)
         {
-        case 3:
+        case core::codec::t_colorType_RGB:
+        case core::codec::t_colorType_BGR:
             swap3(src, dst);
+            dst->format.color_type = srcColorType == core::codec::t_colorType_RGB ? core::codec::t_colorType_BGR : core::codec::t_colorType_RGB;
             break;
         
-        case 4:
+        case core::codec::t_colorType_RGBA:
+        case core::codec::t_colorType_BGRA:
             swap4(src, dst);
+            dst->format.color_type = srcColorType == core::codec::t_colorType_RGBA ? core::codec::t_colorType_BGRA : core::codec::t_colorType_RGBA;
             break;
 
         default:

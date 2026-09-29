@@ -1,6 +1,7 @@
 #pragma once
 #include "../tImage_definition.h"
 #include "Matrix.h"
+#include "core/codec/codec.h"
 
 namespace tImage {
 
@@ -16,26 +17,6 @@ namespace tImage {
 
 	};
 
-	typedef enum {
-
-		/* gray scale */
-		t_colorType_GrayScale		= 0,
-		t_colorType_GrayScaleAlpha	= 1L << 0L,
-		
-		/* 3 channels */
-		
-		t_colorType_RGB				= 1L << 1L,
-		t_colorType_BGR				= 1L << 2L,
-		t_colorType_YUV				= 1L << 3L,
-		t_colorType_YCbCr			= 1L << 4L,
-
-		/* +alpha channel */
-
-		t_colorType_RGBA			= 1L << 5L,
-		t_colorType_BGRA			= 1L << 6L,
-
-	}t_colorType;
-
 	/*
 	// Bits per channel.
 	typedef struct {
@@ -49,12 +30,16 @@ namespace tImage {
 	// Pixel format for Image class.
 	typedef struct {
 		t_uint channels;
+		core::codec::t_colorType color_type;
 		/*
 		BitsPerChannel bits_per_channel;
 		t_bool packed;
 		*/
 		t_uint bytes_per_pixel;		// if packed is true, then use this.
 	}PixelFormat;
+
+	class Image;
+	DLL_EXPORT t_err swap(Image* src, Image* dst) noexcept;
 
 	class Image : public Matrix<t_uchar> {
 
@@ -90,9 +75,9 @@ namespace tImage {
 		/* Delete */
 		Image(t_uint cols, t_uint rows) = delete;
 		/* Initialize class from allocate function */
-		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels);
+		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
 		/* Initialize class from allocate function */
-		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, t_uint depth);
+		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth);
 		//DLL_EXPORT Image(t_uint width, t_uint height, t_uint channles, BitsPerChannel unpacked_format);
 
 		DLL_EXPORT ~Image();
@@ -104,16 +89,16 @@ namespace tImage {
 		DLL_EXPORT t_err input(
 			t_uchar* src,
 			t_uint width, t_uint height,
-			t_uint channels, t_uint depth,
+			t_uint channels, core::codec::t_colorType colorType, t_uint depth,
 			t_uint align
 		);
 
 		t_err allocate(t_uint cols, t_uint rows) = delete;
 
 		/* Allocate memory of image */
-		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels);
+		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
 		/* Allocate memory of image. depth is byte count. */
-		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, t_uint depth);
+		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth);
 
 		/* Release memory */
 		DLL_EXPORT void release();
@@ -126,24 +111,28 @@ namespace tImage {
 		t_uint rows() const noexcept = delete;
 
 		/* Get width of image */
-		DLL_EXPORT t_uint width() const noexcept;
+		inline t_uint width() const noexcept {
+			return this->_cols;
+		}
 		/* Get height of image */
-		DLL_EXPORT t_uint height() const noexcept;
+		inline t_uint height() const noexcept {
+			return this->_rows;
+		}
 		/* Get stride of image */
 		// DLL_EXPORT t_uint64 stride() const noexcept;
 		/* Get channels of image */
-		DLL_EXPORT t_uint channels() const noexcept;
+		inline t_uint channels() const noexcept {
+			return this->format.channels;
+		}
+		/* Get color type of image */
+		inline core::codec::t_colorType colorType() const noexcept {
+			return this->format.color_type;
+		}
 		/* Get bit depth of image */
 		DLL_EXPORT t_uint depth() const noexcept;
 		/* Get byte depth of image */
 		DLL_EXPORT t_uint depthByte() const noexcept;
-		/* Get color type of image */
-		//DLL_EXPORT t_colorType colorType() const noexcept;
 
-		DLL_EXPORT t_err fill(t_uchar c);
-
-		DLL_EXPORT t_err RGB2BGR(void);
-		DLL_EXPORT t_err RGBA2BGRA(void);
 		/* convert color channel */
 		//DLL_EXPORT t_err convertColorType(t_colorType type);
 
@@ -153,6 +142,8 @@ namespace tImage {
 		
 		DLL_EXPORT t_uchar& operator()(t_uint x, t_uint y);
 		//DLL_EXPORT t_uchar& operator()(t_uint x, t_uint y, t_uint c);
+
+		friend t_err swap(Image* src, Image* dst) noexcept;
 
 	};
 

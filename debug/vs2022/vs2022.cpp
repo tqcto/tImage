@@ -450,7 +450,7 @@ void test_Image2Matrix(void) {
 	const t_uint height = 10;
 	const t_uint channels = 1;
 
-	Image src(width, height, channels);
+	Image src(width, height, channels, core::codec::t_colorType_RGB);
 	Matrix<t_float> dst(width, height);
 
 	const t_uchar s = 255 / (width - 1);
@@ -618,10 +618,10 @@ void test_split_merge(void) {
 	printf("input img channels=%d\n", input.channels());
 
 	Image dst_planes[] = {
-		Image(input.width(), input.height(), input.channels()),
-		Image(input.width(), input.height(), input.channels()),
-		Image(input.width(), input.height(), input.channels()),
-		Image(input.width(), input.height(), input.channels())
+		Image(input.width(), input.height(), 1, core::codec::t_colorType_GrayScale),
+		Image(input.width(), input.height(), 1, core::codec::t_colorType_GrayScale),
+		Image(input.width(), input.height(), 1, core::codec::t_colorType_GrayScale),
+		Image(input.width(), input.height(), 1, core::codec::t_colorType_GrayScale)
 	};
 	split(&input, dst_planes);
 
@@ -693,8 +693,8 @@ t_int main(void) {
 	test_jpeg();
 
     Image src, dst;
-    decodePNG(&src, IMG_PATH_PNG);
-	dst.allocate(src.width(), src.height(), src.channels());
+    decodeJPEG(&src, IMG_PATH_JPG);
+	dst.allocate(src.width(), src.height(), src.channels(), src.colorType());
 
 	if (core::t_CPU_INFO.processor & core::t_cpu_processor_AVX) {
 
@@ -704,12 +704,13 @@ t_int main(void) {
 
 	printf("start.\n");
 	swap(&src, &dst);
+	swap(&dst, &src);
 	printf("finish.\n");
 
 	// ImageクラスをFFT用パディングにするのはユーザー側が指示する．
 	// メモリ管理領域が外部の可能性を考慮すると，パディングによるデータ領域の新たな確保が必要なため．
 
-    encodePNG(&dst, "test.png");
+    encodePNG(&src, "test.png");
     
     return 0;
 

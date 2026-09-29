@@ -36,9 +36,9 @@ namespace tImage {
 		
 
 	}
-	Image::Image(t_uint width, t_uint height, t_uint channels) {
+	Image::Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType) {
 
-		t_err err = this->allocate(width, height, channels);
+		t_err err = this->allocate(width, height, channels, colorType);
 
 		switch (err) {
 
@@ -56,9 +56,9 @@ namespace tImage {
 		}
 
 	}
-	Image::Image(t_uint width, t_uint height, t_uint channels, t_uint depth) {
+	Image::Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth) {
 
-		t_err err = this->allocate(width, height, channels, depth);
+		t_err err = this->allocate(width, height, channels, colorType, depth);
 
 		switch (err) {
 
@@ -118,7 +118,7 @@ namespace tImage {
 	t_err Image::input(
 		t_uchar* src,
 		t_uint width, t_uint height,
-		t_uint channels, t_uint depth,
+		t_uint channels, core::codec::t_colorType colorType, t_uint depth,
 		t_uint align
 	) {
 
@@ -133,6 +133,7 @@ namespace tImage {
 		this->_rows = height;
 
 		this->format.channels = channels;
+		this->format.color_type = colorType;
 		this->format.bytes_per_pixel = (depth >> 3) * channels;	// usually 8bit (=1byte)
 		
 		err |= this->setAlign(align);
@@ -148,7 +149,7 @@ namespace tImage {
 
 	}
 
-	t_err Image::allocate(t_uint width, t_uint height, t_uint channels) {
+	t_err Image::allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType) {
 
 		if (!width || !height || !channels) return t_err_InvalidArgument;
 
@@ -156,6 +157,7 @@ namespace tImage {
 		this->_rows = height;
 
 		this->format.channels = channels;
+		this->format.color_type = colorType;
 		//this->format.packed = true;
 		this->format.bytes_per_pixel = channels;//1 * channels;	// usually 8bit (=1byte)
 
@@ -166,7 +168,7 @@ namespace tImage {
 		return t_err_None;
 
 	}
-	t_err Image::allocate(t_uint width, t_uint height, t_uint channels, t_uint depth) {
+	t_err Image::allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth) {
 
 		if (!width || !height || !channels || !depth) return t_err_InvalidArgument;
 
@@ -174,6 +176,7 @@ namespace tImage {
 		this->_rows = height;
 
 		this->format.channels = channels;
+		this->format.color_type = colorType;
 		this->format.bytes_per_pixel = (depth >> 3) * channels;	// usually 8bit (=1byte)
 
 		t_err err = this->_allocate_memory();
@@ -192,6 +195,7 @@ namespace tImage {
 
 		this->format.bytes_per_pixel = 0;
 		this->format.channels = 0;
+		this->format.color_type = core::codec::t_colorType_Unknown;
 
 	}
 
@@ -201,16 +205,6 @@ namespace tImage {
 
 	}
 
-	t_uint Image::width() const noexcept {
-
-		return this->_cols;
-
-	}
-	t_uint Image::height() const noexcept {
-
-		return this->_rows;
-
-	}
 	/*
 	t_uint64 Image::stride() const noexcept {
 
@@ -218,11 +212,6 @@ namespace tImage {
 
 	}
 	*/
-	t_uint Image::channels() const noexcept {
-
-		return this->format.channels;
-
-	}
 	t_uint Image::depth() const noexcept {
 
 		return (this->format.bytes_per_pixel / this->format.channels) << 3;
@@ -233,14 +222,8 @@ namespace tImage {
 		return this->format.bytes_per_pixel / this->format.channels;
 
 	}
+
 	/*
-	t_colorType Image::colorType() const noexcept {
-
-		return this->_colorType;
-
-	}
-	*/
-
 	t_err Image::fill(t_uchar c) {
 
 		if (this->empty()) return t_err_MemoryAccessFailed;
@@ -250,7 +233,9 @@ namespace tImage {
 		return t_err_None;
 
 	}
+	*/
 
+	/*
 	inline t_uint _RGB2BGR(t_uint c) {
 
 		return	(	c & 0xFF00FF00u)	|
@@ -258,118 +243,8 @@ namespace tImage {
 				((	c & 0x000000FFu) << 16);
 
 	}
-	t_err Image::RGB2BGR(void) {
-
-		if (this->format.channels < 3) return t_err_MemoryAccessFailed;
-
-		// only handle 8bit per channel here
-		if (this->depthByte() != 1) {
-			// fallback: simple byte-swap scalar
-			t_uint64 pixels = (t_uint64)this->_cols * this->_rows;
-			t_uchar* p = this->data;
-			for (t_uint64 i = 0; i < pixels; ++i) {
-				t_uchar r = p[3*i + 0];
-				p[3*i + 0] = p[3*i + 2];
-				p[3*i + 2] = r;
-			}
-			return t_err_None;
-		}
-
-		const t_uint64 pixels = (t_uint64)this->_cols * this->_rows;
-		t_uchar* src = this->data;
-
-		// temporary 32-bit buffer (one uint32 per pixel: low 3 bytes used)
-		t_uint* tmp = (t_uint*)malloc(pixels * sizeof(t_uint));
-		if (!tmp) return t_err_MemoryAllocationFailed;
-
-		// expand RGB24 -> 32bit words (B,G,R,0 in low bytes layout or R|G<<8|B<<16)
-		for (t_uint64 i = 0; i < pixels; ++i) {
-			tmp[i] = (t_uint)src[3*i + 0] | ((t_uint)src[3*i + 1] << 8) | ((t_uint)src[3*i + 2] << 16);
-		}
-
-		// AVX2: swap R and B in 32-bit lanes:
-		#if defined(__AVX2__)
-		// swapped = (val & 0xFF00FF00) | ((val & 0x000000FF) << 16) | ((val & 0x00FF0000) >> 16)
-		const __m256i m_keep = _mm256_set1_epi32(0xFF00FF00u);
-		const __m256i m_r    = _mm256_set1_epi32(0x000000FFu);
-		const __m256i m_b    = _mm256_set1_epi32(0x00FF0000u);
-
-		t_uint64 i = 0;
-		for (; i + 8 <= pixels; i += 8) {
-			__m256i v = _mm256_loadu_si256((const __m256i*)(tmp + i));
-			__m256i vr = _mm256_and_si256(v, m_r);
-			__m256i vb = _mm256_and_si256(v, m_b);
-			vr = _mm256_slli_epi32(vr, 16);
-			vb = _mm256_srli_epi32(vb, 16);
-			v = _mm256_and_si256(v, m_keep);
-			v = _mm256_or_si256(v, vr);
-			v = _mm256_or_si256(v, vb);
-			_mm256_storeu_si256((__m256i*)(tmp + i), v);
-		}
-		// tail
-		for (; i < pixels; ++i) {
-			tmp[i] = _RGB2BGR(tmp[i]);
-		}
-		#else
-		for (t_uint64 i = 0; i < pixels; ++i) {
-			t_uint value = tmp[i];
-			tmp[i] = _RGB2BGR(value);
-		}
-		#endif
-
-		// pack back: 32bit -> RGB24
-		for (t_uint64 j = 0; j < pixels; ++j) {
-			t_uint v = tmp[j];
-			src[3*j + 0] = (t_uchar)(v & 0xFFu);
-			src[3*j + 1] = (t_uchar)((v >> 8) & 0xFFu);
-			src[3*j + 2] = (t_uchar)((v >> 16) & 0xFFu);
-		}
-
-		free(tmp);
-		return t_err_None;
-		
-	}
+	*/
 	
-	t_err Image::RGBA2BGRA(void) {
-
-		if (this->format.channels < 4) return t_err_MemoryAccessFailed;
-
-		if (this->depthByte() != 1) return t_err_MemoryAccessFailed;
-
-		// mask
-		#if defined(__AVX2__)
-		const __m256i m_keep = _mm256_set1_epi32(0xFF00FF00u); // keep G and A
-		const __m256i m_r    = _mm256_set1_epi32(0x000000FFu);
-		const __m256i m_b    = _mm256_set1_epi32(0x00FF0000u);
-
-		t_uint64 i = 0;
-		for (; i + 8 <= this->stride() * this->_rows; i += 8) {
-
-			__m256i v = _mm256_loadu_si256((const __m256i*)(this->data + i * 4));
-			__m256i vr = _mm256_and_si256(v, m_r);
-			__m256i vb = _mm256_and_si256(v, m_b);
-			vr = _mm256_slli_epi32(vr, 16);
-			vb = _mm256_srli_epi32(vb, 16);
-			v = _mm256_and_si256(v, m_keep);
-			v = _mm256_or_si256(v, vr);
-			v = _mm256_or_si256(v, vb);
-			_mm256_storeu_si256((__m256i*)(this->data + i * 4), v);
-
-		}
-		#else
-		const t_uint64 pixels = (t_uint64)this->_cols * this->_rows;
-		for (t_uint64 i = 0; i < pixels; ++i) {
-			t_uchar* pixel = this->data + i * 4;
-			t_uchar red = pixel[0];
-			pixel[0] = pixel[2];
-			pixel[2] = red;
-		}
-		#endif
-
-		return t_err_None;
-
-	}
-
 	t_bool Image::operator==(const Image& img) const {
 
 		return (
@@ -406,7 +281,7 @@ namespace tImage {
 		t_err err = core::codec::readPNG(&in_data, filepath);
 		if (err != t_err_None) return err;
 
-		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.depth);
+		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.colorType, in_data.depth);
 		if (err != t_err_None) return err;
 
 		in_data.stride = dst->stride();
@@ -418,7 +293,7 @@ namespace tImage {
 		if (src->empty()) return t_err_InvalidArgument;
 
 		core::codec::t_ImageFile_Header in_data = {
-			src->width(), src->height(), src->stride(), src->channels(), src->depth()
+			src->width(), src->height(), src->stride(), src->channels(), src->colorType(), src->depth()
 		};
 		return core::codec::writePNG(&in_data, src->data, filepath);
 
@@ -432,7 +307,7 @@ namespace tImage {
 		t_err err = core::codec::readJPEG(&in_data, filepath);
 		if (err != t_err_None) return err;
 
-		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.depth);
+		err = dst->allocate(in_data.width, in_data.height, in_data.channels, in_data.colorType, in_data.depth);
 		if (err != t_err_None) return err;
 
 		in_data.stride = dst->stride();
@@ -443,7 +318,7 @@ namespace tImage {
 		if (src == nullptr || src->empty()) return t_err_InvalidArgument;
 
 		core::codec::t_ImageFile_Header in_data = {
-			src->width(), src->height(), src->stride(), src->channels(), src->depth()
+			src->width(), src->height(), src->stride(), src->channels(), src->colorType(), src->depth()
 		};
 		return core::codec::writeJPEG(&in_data, src->data, filepath);
 	}

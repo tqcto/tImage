@@ -57,15 +57,24 @@ namespace codec {
 		switch (type) {
 		case PNG_COLOR_TYPE_GRAY:
 			png_header->channels = 1;
+			png_header->colorType = t_colorType_GrayScale;
 			break;
 		case PNG_COLOR_TYPE_GRAY_ALPHA:
 			png_header->channels = 2;
+			png_header->colorType = t_colorType_GrayScaleAlpha;
 			break;
 		case PNG_COLOR_TYPE_RGB:
 			png_header->channels = 3;
+			png_header->colorType = t_colorType_RGB;
 			break;
 		case PNG_COLOR_TYPE_RGBA:
 			png_header->channels = 4;
+			png_header->colorType = t_colorType_RGBA;
+			break;
+		case PNG_COLOR_TYPE_PALETTE:
+			png_header->channels = 3;
+			png_header->colorType = t_colorType_RGB;
+			png_set_palette_to_rgb(png);
 			break;
 		}
 
@@ -144,27 +153,27 @@ namespace codec {
 		png_infop info = png_create_info_struct(png);
 
 		png_byte type;
-		switch (in_data->channels)
+		switch (in_data->colorType)
 		{
 		// grayscale
-		case 1:
+		case t_colorType_GrayScale:
 			type = PNG_COLOR_TYPE_GRAY;
 			break;
 		// grayscale + alpha
-		case 2:
+		case t_colorType_GrayScaleAlpha:
 			type = PNG_COLOR_TYPE_GRAY_ALPHA;
 			break;
 		// rgb
-		case 3:
+		case t_colorType_RGB:
 			type = PNG_COLOR_TYPE_RGB;
 			break;
 		// rgba
-		case 4:
+		case t_colorType_RGBA:
 			type = PNG_COLOR_TYPE_RGB_ALPHA;
 			break;
 		
 		default:
-			printf("channel num is invalid!!\n");
+			printf("Color type is invalid!!\n");
 			png_destroy_write_struct(&png, &info);
 			fclose(fp);
 			return t_err_CanNotWrittenFile;

@@ -6,6 +6,5 @@ namespace tImage {
 
     // swap channels
     // ex: RGB <-> BGR
-    DLL_EXPORT t_err swap(Image* src, Image* dst);
 
 }
