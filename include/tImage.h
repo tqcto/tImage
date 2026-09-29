@@ -10,6 +10,7 @@
 #include "image/image.h"
 #include "image/MatrixConverter.h"
 
+#include "core/stride.h"
 // #include "manage/manage.h"
 #include "core/codec/png.h"
 #include "core/codec/jpeg.h"
