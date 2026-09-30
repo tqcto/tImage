@@ -125,8 +125,8 @@ namespace codec {
 		
 		if (in_data == nullptr || src == nullptr || filepath == nullptr ||
 			!in_data->width || !in_data->height || in_data->depth != 8 ||
-			checkColorTpye ||
-			in_data->stride < static_cast<t_uint64>(in_data->width) * in_data->channels) {
+			!checkColorTpye ||
+			in_data->stride < static_cast<t_uint64>(in_data->width * in_data->channels)) {
 			return t_err_InvalidArgument;
 		}
 

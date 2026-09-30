@@ -191,6 +191,18 @@ void test_Matrix(void) {
 
 void test_transpose(void) {
 
+	Image src;
+	decodeJPEG(&src, IMG_PATH_JPG);
+	Image dst(src.height(), src.width(), src.channels(), src.colorType());
+
+	transpose(&src, &dst);
+
+	t_err err = encodeJPEG(&dst, "transposed.jpg");
+
+}
+
+void test_transpose_complex(void) {
+
 	const t_uint cols = 3;
 	const t_uint rows = 5;
 
@@ -689,7 +701,7 @@ t_int main(void) {
 	//test_fft();
 	//test_Fourier1d();
 
-	// test_transpose();
+	test_transpose();
 	// test_Fourier2dBlock();
 
 	// test_Fourier2d();

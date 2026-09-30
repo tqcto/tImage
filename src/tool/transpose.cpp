@@ -1,4 +1,5 @@
 #include "../../include/tool/transpose.h"
+#include "../../include/core/parallel/threadPool.h"
 
 #include <string.h>
 
@@ -65,7 +66,8 @@ namespace tImage {
         const Image* src, Image* dst,
         t_uint am_start, t_uint an_start,
         t_uint bm_start, t_uint bn_start,
-        t_uint m, t_uint n
+        t_uint m, t_uint n,
+        core::parallel::threadPool* threadPool
     ) {
 
 
@@ -75,7 +77,8 @@ namespace tImage {
 
             auto pixel_bytes = src->depthByte() * src->channels();
 
-            for (t_int y = 0; y < m; y++) {
+            threadPool->pfor(0, m, [n, an_start, am_start, bn_start, bm_start, src, dst, pixel_bytes](t_int y) {
+                
                 for (t_int x = 0; x < n; x++) {
 
                     t_uint src_x = an_start + x;
@@ -99,7 +102,8 @@ namespace tImage {
                     }
                     */
                 }
-            }
+
+            });
 
             return;
 
@@ -111,8 +115,8 @@ namespace tImage {
             const t_uint floor = n >> 1;
             const t_uint ceil = (n + 1) >> 1;
 
-            REC_TRANSPOSE_any(src, dst, am_start, an_start, bm_start, bn_start, m, floor);                  // (A_1, B_1)
-            REC_TRANSPOSE_any(src, dst, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil);   // (A_2, B_2)
+            REC_TRANSPOSE_any(src, dst, am_start, an_start, bm_start, bn_start, m, floor, threadPool);                  // (A_1, B_1)
+            REC_TRANSPOSE_any(src, dst, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil, threadPool);   // (A_2, B_2)
 
         }
         // このとき，行列srcを上下に，行列dstを左右に分割
@@ -121,8 +125,8 @@ namespace tImage {
             const t_uint floor = m >> 1;
             const t_uint ceil = (m + 1) >> 1;
 
-            REC_TRANSPOSE_any(src, dst, am_start, an_start, bm_start, bn_start, floor, n);                  // (A_1, B_1)
-            REC_TRANSPOSE_any(src, dst, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n);   // (A_2, B_2)
+            REC_TRANSPOSE_any(src, dst, am_start, an_start, bm_start, bn_start, floor, n, threadPool);                  // (A_1, B_1)
+            REC_TRANSPOSE_any(src, dst, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n, threadPool);   // (A_2, B_2)
 
         }
 
@@ -239,8 +243,9 @@ namespace tImage {
 
         const t_uint width = src->width();
         const t_uint height = src->height();
+        core::parallel::threadPool threadPool;       
 
-        REC_TRANSPOSE_any(src, dst, 0, 0, 0, 0, height, width);
+        REC_TRANSPOSE_any(src, dst, 0, 0, 0, 0, height, width, &threadPool);
 
         return t_err_None;
 
