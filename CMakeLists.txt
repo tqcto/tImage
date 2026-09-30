@@ -84,6 +84,9 @@ set(TIMAGE_SOURCES
     src/core/codec/png.cpp
     src/core/codec/jpeg.cpp
 
+    src/core/parallel/parallel.cpp
+    src/core/parallel/threadPool.cpp
+
     src/tool/converter.cpp
     src/tool/merge.cpp
     src/tool/split.cpp

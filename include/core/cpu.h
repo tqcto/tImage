@@ -1,6 +1,8 @@
 #pragma once
 #include "../tImage_definition.h"
 
+#include <thread>
+
 #if defined(T_MS)
 
 #include <intrin.h>
@@ -14,7 +16,8 @@
 namespace tImage {
 namespace core {
 
-    #define t_CPU_INFO    cpu_info::get()
+    #define t_CPU_INFO                  cpu_info::get()
+    #define t_CPU_SET_NUM_LOGICAL_CORES cpu_info::set_num_cores
 
     enum cpu_vendor : t_uint {
 
@@ -73,8 +76,9 @@ namespace core {
     // information of cpu
     struct cpu_info {
 
-        cpu_vendor vendor;
-        t_uint processor;
+        cpu_vendor vendor;  // vendor name
+        t_uint processor;   // available processors
+        t_uint num_cores;   // number of cores
 
         cpu_info() : vendor{t_cpu_vendor_Unknown}, processor{t_cpu_processor_None} {
 
@@ -177,12 +181,31 @@ namespace core {
                 this->processor |= t_cpu_processor_AVX512dq;
             }
 
+            this->num_cores = std::thread::hardware_concurrency();
+
         }
 
-        // get or generate instance
-        inline static const cpu_info& get() {
+    private:
+        static cpu_info& _get(void) {
             static cpu_info instance;
             return instance;
+        }
+
+    public:
+        // get or generate instance
+        inline static const cpu_info& get() {
+            return _get();
+        }
+
+        // set number of logical cores
+        // if num = 0, then number of logical cores is auto setting.
+        inline static void set_num_cores(t_uint num) {
+            if (num == 0) {
+                _get().num_cores = std::thread::hardware_concurrency();
+            }
+            else {
+                _get().num_cores = num;
+            }
         }
 
     };

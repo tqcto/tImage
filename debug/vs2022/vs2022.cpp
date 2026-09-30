@@ -5,6 +5,7 @@
 #include <core/mem/align.h>
 #include <core/simd/intrin_ssse3.h>
 #include <core/simd/intrin_avx.h>
+#include <core/parallel/parallel.h>
 
 // using in debug
 #include <stdlib.h>
@@ -665,6 +666,22 @@ void test_jpeg(void) {
 
 }
 
+void test_threadPool(void) {
+
+	core::parallel::threadPool pool;
+
+	for (t_int i = 0; i < 10; i++) {
+		pool.enqueue([i] {
+			std::cout << "Task " << i << " running on thread " 
+                      << std::this_thread::get_id() << "\n";
+		});
+	}
+
+	// run
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+
+}
+
 t_int main(void) {
 
 	//test_Matrix();
@@ -680,6 +697,8 @@ t_int main(void) {
 	// test_Image2Matrix();
 
 	// test_fft4Image();
+
+	// test_threadPool();
 
 	test_split_merge();
 
@@ -701,6 +720,10 @@ t_int main(void) {
 		test_avx();
 
 	}
+
+	// printf("number of cores:%d\n", core::t_CPU_INFO.num_cores);
+	// core::t_CPU_SET_NUM_LOGICAL_CORES(3);
+	// printf("number of cores:%d\n", core::t_CPU_INFO.num_cores);
 
 	printf("start.\n");
 	swap(&src, &dst);
