@@ -3,8 +3,9 @@
 #include "../../include/core/codec/codec.h"
 #include "../../include/core/simd/intrin_avx.h"
 #include "../../include/core/simd/intrin_ssse3.h"
+#include "../../include/core/parallel/threadPool.h"
 
-#include <omp.h>
+// #include <omp.h>
 
 namespace tImage {
 
@@ -35,6 +36,8 @@ namespace tImage {
         const t_int width = src->width();
         const t_int height = src->height();
 
+        core::parallel::threadPool threadPool;
+
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 16) && check_big_align(dst->align(), 16);
 
@@ -52,9 +55,8 @@ namespace tImage {
                 15
             );
 
-            #pragma omp parallel for
-            for (t_int y = 0; y < height; y++) {
-
+            threadPool.pfor(0, height, [src, dst, loop, mask](t_int y) {
+                
                 core::simd::v_uint8x16 src_data;
 
                 auto src_rowptr = src->rowPtr(y);
@@ -70,15 +72,34 @@ namespace tImage {
 
                 }
 
-            }
+            });
+
+            // #pragma omp parallel for
+            // for (t_int y = 0; y < height; y++) {
+
+            //     core::simd::v_uint8x16 src_data;
+
+            //     auto src_rowptr = src->rowPtr(y);
+            //     auto dst_rowptr = dst->rowPtr(y);
+
+            //     for (t_int x = 0; x < loop; x++) {
+                    
+            //         core::simd::v128_load_8x16(&src_rowptr[x * 5], src_data);
+
+            //         core::simd::v128_shuffle_8x16(src_data, src_data, mask);
+
+            //         core::simd::v128_store_8x16(src_data, &dst_rowptr[x * 5]);
+
+            //     }
+
+            // }
 
         }
         // normal
         else {
 
-            #pragma omp parallel for
-            for (t_int y = 0; y < height; y++) {
-
+            threadPool.pfor(0, height, [src, dst, width](t_int y) {
+                
                 auto src_rowptr = src->rowPtr(y);
                 auto dst_rowptr = dst->rowPtr(y);
 
@@ -92,7 +113,25 @@ namespace tImage {
                     
                 }
 
-            }
+            });
+
+            // #pragma omp parallel for
+            // for (t_int y = 0; y < height; y++) {
+
+            //     auto src_rowptr = src->rowPtr(y);
+            //     auto dst_rowptr = dst->rowPtr(y);
+
+            //     for (t_int x = 0; x < width; x++) {
+
+            //         const t_int i = x * 3;
+            //         const t_int* srcPixelPtr = reinterpret_cast<t_int*>(&src_rowptr[i]);
+            //         t_int* dstPixelPtr = reinterpret_cast<t_int*>(&dst_rowptr[i]);
+
+            //         *dstPixelPtr = swap3_pixel(*srcPixelPtr);
+                    
+            //     }
+
+            // }
 
         }
 
@@ -104,6 +143,8 @@ namespace tImage {
 
         const t_int width = src->width();
         const t_int height = src->height();
+
+        core::parallel::threadPool threadPool;
 
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 32) && check_big_align(dst->align(), 32);
@@ -123,10 +164,9 @@ namespace tImage {
                 26, 25, 24, 27,
                 30, 29, 28, 31
             );
-            
-            #pragma omp parallel for
-            for (t_int y = 0; y < height; y++) {
 
+            threadPool.pfor(0, height, [src, dst, loop, mask](t_int y) {
+                
                 core::simd::v_uint8x32 src_data;
 
                 auto src_rowptr = src->rowPtr(y);
@@ -142,7 +182,27 @@ namespace tImage {
 
                 }
 
-            }
+            });
+            
+            // #pragma omp parallel for
+            // for (t_int y = 0; y < height; y++) {
+
+            //     core::simd::v_uint8x32 src_data;
+
+            //     auto src_rowptr = src->rowPtr(y);
+            //     auto dst_rowptr = dst->rowPtr(y);
+
+            //     for (t_int x = 0; x < loop; x++) {
+                    
+            //         core::simd::v256_load_8x32(&src_rowptr[x << 5], src_data);
+
+            //         core::simd::v256_shuffle_8x32(src_data, src_data, mask);
+
+            //         core::simd::v256_store_8x32(src_data, &dst_rowptr[x << 5]);
+
+            //     }
+
+            // }
 
         }
         // simd 128 bit
@@ -156,10 +216,9 @@ namespace tImage {
                 10, 9, 8, 11,
                 14, 13, 12, 15
             );
-            
-            #pragma omp parallel for
-            for (t_int y = 0; y < height; y++) {
 
+            threadPool.pfor(0, height, [src, dst, loop, mask](t_int y) {
+                
                 core::simd::v_uint8x16 src_data;
 
                 auto src_rowptr = src->rowPtr(y);
@@ -175,14 +234,33 @@ namespace tImage {
 
                 }
 
-            }
+            });
+            
+            // #pragma omp parallel for
+            // for (t_int y = 0; y < height; y++) {
+
+            //     core::simd::v_uint8x16 src_data;
+
+            //     auto src_rowptr = src->rowPtr(y);
+            //     auto dst_rowptr = dst->rowPtr(y);
+
+            //     for (t_int x = 0; x < loop; x++) {
+                    
+            //         core::simd::v128_load_8x16(&src_rowptr[x << 2], src_data);
+
+            //         core::simd::v128_shuffle_8x16(src_data, src_data, mask);
+
+            //         core::simd::v128_store_8x16(src_data, &dst_rowptr[x << 2]);
+
+            //     }
+
+            // }
         }
         // normal
         else {
 
-            #pragma omp parallel for
-            for (t_int y = 0; y < height; y++) {
-
+            threadPool.pfor(0, height, [src, dst, width](t_int y) {
+                
                 auto src_rowptr = src->rowPtr(y);
                 auto dst_rowptr = dst->rowPtr(y);
 
@@ -195,8 +273,26 @@ namespace tImage {
                     *dstPixelPtr = swap4_pixel(*srcPixelPtr);
                     
                 }
+
+            });
+
+            // #pragma omp parallel for
+            // for (t_int y = 0; y < height; y++) {
+
+            //     auto src_rowptr = src->rowPtr(y);
+            //     auto dst_rowptr = dst->rowPtr(y);
+
+            //     for (t_int x = 0; x < width; x++) {
+
+            //         const t_int i = x << 2;
+            //         const t_int* srcPixelPtr = reinterpret_cast<t_int*>(&src_rowptr[i]);
+            //         t_int* dstPixelPtr = reinterpret_cast<t_int*>(&dst_rowptr[i]);
+
+            //         *dstPixelPtr = swap4_pixel(*srcPixelPtr);
+                    
+            //     }
                 
-            }
+            // }
 
         }
 
