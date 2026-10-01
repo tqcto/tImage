@@ -10,7 +10,8 @@ namespace tImage {
         Matrix<t_float>* dst_real, Matrix<t_float>* dst_imag,
         t_uint am_start, t_uint an_start,
         t_uint bm_start, t_uint bn_start,
-        t_uint m, t_uint n
+        t_uint m, t_uint n,
+        core::parallel::threadPool* threadPool
     ) {
 
 
@@ -18,8 +19,8 @@ namespace tImage {
         // ブロックをこれより小さくすると，再帰処理のオーバーヘッドが大きくなり，逆に遅くなる．
         if (m <= 32 && n <= 32) {
 
-            for (t_int y = 0; y < m; y++) {
-
+            threadPool->pfor(0, m, [n, an_start, am_start, bn_start, bm_start, src_real, src_imag, dst_real, dst_imag](t_int y) {
+                
                 auto src_real_rowptr = src_real->rowPtr(am_start + y);
                 auto src_imag_rowptr = src_imag->rowPtr(am_start + y);
 
@@ -33,7 +34,7 @@ namespace tImage {
 
                 }
 
-            }
+            });
             return;
 
         }
@@ -44,8 +45,8 @@ namespace tImage {
             const t_uint floor = n >> 1;
             const t_uint ceil = (n + 1) >> 1;
 
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, m, floor);                  // (A_1, B_1)
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil);   // (A_2, B_2)
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, m, floor, threadPool);                  // (A_1, B_1)
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil, threadPool);   // (A_2, B_2)
 
         }
         // このとき，行列srcを上下に，行列dstを左右に分割
@@ -54,8 +55,8 @@ namespace tImage {
             const t_uint floor = m >> 1;
             const t_uint ceil = (m + 1) >> 1;
 
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, floor, n);                  // (A_1, B_1)
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n);   // (A_2, B_2)
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, floor, n, threadPool);                  // (A_1, B_1)
+            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n, threadPool);   // (A_2, B_2)
 
         }
 
@@ -232,8 +233,9 @@ namespace tImage {
 
         const t_uint cols = src_real->cols();
         const t_uint rows = src_real->rows();
+        core::parallel::threadPool threadPool;
 
-        REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, 0, 0, 0, 0, rows, cols);
+        REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, 0, 0, 0, 0, rows, cols, &threadPool);
 
         return t_err_None;
 

@@ -702,6 +702,7 @@ t_int main(void) {
 	//test_Fourier1d();
 
 	test_transpose();
+	test_transpose_complex();
 	// test_Fourier2dBlock();
 
 	// test_Fourier2d();
