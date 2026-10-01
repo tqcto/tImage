@@ -29,7 +29,7 @@ namespace tImage {
 		// Is memory from external
 		t_bool _external_memory = false;
 
-		t_err _allocate_memory() {
+		inline t_err _allocate_memory() {
 
             // calc stride
             this->_stride = core::calcStride4Matrix(this->_cols, sizeof(T), this->_align);
