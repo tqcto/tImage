@@ -44,9 +44,10 @@ namespace tImage {
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 16) && check_big_align(dst->align(), 16);
 
-        #if defined(TIMAGE_ARCH_X86)
+        // #if defined(TIMAGE_ARCH_X86)
         // simd 128 bit
-        if (proc & core::t_cpu_processor_SSSE3 && check_aligned) {
+        if (
+            proc & core::t_simd_set_128bit && check_aligned) {
 
             const t_int loop = 3 * (width >> 4);
 
@@ -99,7 +100,7 @@ namespace tImage {
             // }
 
         } else
-        #endif
+        // #endif
         // normal
         {
 
@@ -154,9 +155,9 @@ namespace tImage {
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 32) && check_big_align(dst->align(), 32);
 
-        #if defined(TIMAGE_ARCH_X86)
+        // #if defined(TIMAGE_ARCH_X86)
         // simd 256 bit
-        if (proc & core::t_cpu_processor_AVX && check_aligned) {
+        if (proc & core::t_simd_set_256bit && check_aligned) {
 
             const t_int loop = src->elementsRow() >> 5;
 
@@ -212,7 +213,7 @@ namespace tImage {
 
         }
         // simd 128 bit
-        if (proc & core::t_cpu_processor_SSSE3 && check_aligned) {
+        if (proc & core::t_simd_set_128bit && check_aligned) {
 
             const t_int loop = src->elementsRow() >> 2;
 
@@ -262,7 +263,7 @@ namespace tImage {
 
             // }
         } else
-        #endif
+        // #endif
         // normal
         {
 

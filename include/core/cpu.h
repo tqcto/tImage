@@ -54,6 +54,13 @@ namespace core {
         t_cpu_processor_WASM_SIMD = 1 << 11,
 
     };
+    enum simd_set : t_uint {
+        t_simd_set_None     = 0,
+        t_simd_set_64bit    = t_cpu_processor_SSE | t_cpu_processor_NEON,
+        t_simd_set_128bit   = t_cpu_processor_SSSE3 | t_cpu_processor_NEON | t_cpu_processor_WASM_SIMD,
+        t_simd_set_256bit   = t_cpu_processor_AVX | t_cpu_processor_AVX2,
+        t_simd_set_512bit   = t_cpu_processor_AVX512f | t_cpu_processor_AVX512dq,
+    };
 
     // MS
     #if defined(TIMAGE_ARCH_X86) && defined(T_MS)
