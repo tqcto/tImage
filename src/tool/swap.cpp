@@ -1,10 +1,11 @@
 #include "../../include/tool/swap.h"
 #include "../../include/core/cpu.h"
 #include "../../include/core/codec/codec.h"
-#if defined(TIMAGE_ARCH_X86)
-#include "../../include/core/simd/intrin_avx.h"
-#include "../../include/core/simd/intrin_ssse3.h"
-#endif
+// #if defined(TIMAGE_ARCH_X86)
+// #include "../../include/core/simd/intrin_avx.h"
+// #include "../../include/core/simd/intrin_ssse3.h"
+// #endif
+#include "../../include/core/simd/simd.h"
 #include "../../include/core/parallel/threadPool.h"
 
 // #include <omp.h>
