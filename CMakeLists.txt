@@ -108,6 +108,22 @@ add_library(tImage ${TIMAGE_SOURCES})
 
 if(TIMAGE_TARGET_X86)
     target_compile_definitions(tImage PUBLIC TIMAGE_ARCH_X86)
+
+    if(MSVC)
+        set_source_files_properties(src/tool/swap.cpp PROPERTIES
+            COMPILE_OPTIONS "/arch:AVX")
+        target_compile_definitions(tImage PRIVATE TIMAGE_ENABLE_X86_SIMD)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-mavx" TIMAGE_COMPILER_SUPPORTS_AVX)
+        if(TIMAGE_COMPILER_SUPPORTS_AVX)
+            set_source_files_properties(src/tool/swap.cpp PROPERTIES
+                COMPILE_OPTIONS "-mavx")
+            target_compile_definitions(tImage PRIVATE TIMAGE_ENABLE_X86_SIMD)
+        else()
+            message(STATUS "AVX compiler support is unavailable; x86 SIMD in swap.cpp is disabled")
+        endif()
+    endif()
 endif()
 if(ASM_SOURCES)
     target_compile_definitions(tImage PRIVATE T_USE_ASM)
