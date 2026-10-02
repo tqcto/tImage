@@ -16,10 +16,10 @@ namespace simd {
         explicit inline v_uint8x16(__m128i v) : v(v) {}
 
         inline v_uint8x16(
-            t_char v0, t_char v1, t_char v2, t_char v3,
-            t_char v4, t_char v5, t_char v6, t_char v7,
-            t_char v8, t_char v9, t_char v10, t_char v11,
-            t_char v12, t_char v13, t_char v14, t_char v15
+            t_uchar v0, t_uchar v1, t_uchar v2, t_uchar v3,
+            t_uchar v4, t_uchar v5, t_uchar v6, t_uchar v7,
+            t_uchar v8, t_uchar v9, t_uchar v10, t_uchar v11,
+            t_uchar v12, t_uchar v13, t_uchar v14, t_uchar v15
         ) : v(_mm_set_epi8(
                 v15, v14, v13, v12, v11, v10, v9,  v8,
                 v7,  v6,  v5,  v4,  v3,  v2,  v1,  v0
