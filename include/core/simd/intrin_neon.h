@@ -30,24 +30,24 @@ namespace simd {
     };
 
     /*<******************************************* load *******************************************>*/
-    // load aligned 8x16 bit integer to 128 bit register
-    inline void v128_load_8x16_aligned(const t_uchar* src, v_uint8x16& dst) {
-        v128_load_8x16(src, dst);
-    }
     // load uchar 8x16 bit integer to 128 bit register
     inline void v128_load_8x16(const t_uchar* src, v_uint8x16& dst) {
         dst.v = vld1q_u8(src);
     }
+    // load aligned 8x16 bit integer to 128 bit register
+    inline void v128_load_8x16_aligned(const t_uchar* src, v_uint8x16& dst) {
+        v128_load_8x16(src, dst);
+    }
     /*\<******************************************* load *******************************************\>*/
 
     /*<******************************************* store *******************************************>*/
-    // store 128 bit register to aligned 8x16 bit integer
-    inline void v128_store_8x16_aligned(const v_uint8x16& src, t_uchar* dst) {
-        v128_store_8x16(src, dst);
-    }
     // store 128 bit register to unaligned 8x16 bit integer
     inline void v128_store_8x16(const v_uint8x16& src, t_uchar* dst) {
         vst1q_u8(dst, src.v);
+    }
+    // store 128 bit register to aligned 8x16 bit integer
+    inline void v128_store_8x16_aligned(const v_uint8x16& src, t_uchar* dst) {
+        v128_store_8x16(src, dst);
     }
     /*\<******************************************* store *******************************************\>*/
 
