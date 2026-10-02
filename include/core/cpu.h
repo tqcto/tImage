@@ -13,6 +13,16 @@
 
 #endif
 
+#if defined(TIMAGE_ARCH_ARM) || defined(TIMAGE_ARCH_ARM64) || \
+    defined(_M_ARM) || defined(_M_ARM64) || defined(__arm__) || defined(__aarch64__)
+#if defined(__linux__)
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#endif
+#endif
+
 namespace tImage {
 namespace core {
 
@@ -40,6 +50,8 @@ namespace core {
         t_cpu_processor_AVX2    = 1 << 7,
         t_cpu_processor_AVX512f = 1 << 8,
         t_cpu_processor_AVX512dq= 1 << 9,
+        t_cpu_processor_NEON    = 1 << 10,
+        t_cpu_processor_WASM_SIMD = 1 << 11,
 
     };
 
@@ -182,10 +194,32 @@ namespace core {
                 this->processor |= t_cpu_processor_AVX512dq;
             }
 
-            this->num_cores = std::thread::hardware_concurrency();
-            #else
-            this->num_cores = std::thread::hardware_concurrency();
+            #elif defined(TIMAGE_ARCH_ARM) || defined(TIMAGE_ARCH_ARM64) || \
+                  defined(_M_ARM) || defined(_M_ARM64) || defined(__arm__) || defined(__aarch64__)
+            #if defined(__linux__)
+            const unsigned long hardware_capabilities = getauxval(AT_HWCAP);
+            #if defined(HWCAP_ASIMD)
+            if (hardware_capabilities & HWCAP_ASIMD) {
+                this->processor |= t_cpu_processor_NEON;
+            }
+            #elif defined(HWCAP_NEON)
+            if (hardware_capabilities & HWCAP_NEON) {
+                this->processor |= t_cpu_processor_NEON;
+            }
             #endif
+            #elif defined(_WIN32) && defined(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE)
+            if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE)) {
+                this->processor |= t_cpu_processor_NEON;
+            }
+            #elif defined(__APPLE__) && defined(__aarch64__)
+            this->processor |= t_cpu_processor_NEON;
+            #endif
+            #elif defined(__wasm_simd128__)
+            this->processor |= t_cpu_processor_WASM_SIMD;
+            #endif
+
+            // get number of logical cores
+            this->num_cores = std::thread::hardware_concurrency();
 
         }
 
