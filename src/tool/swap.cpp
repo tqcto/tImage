@@ -155,7 +155,7 @@ namespace tImage {
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 32) && check_big_align(dst->align(), 32);
 
-        // #if defined(TIMAGE_ARCH_X86)
+        #if defined(TIMAGE_ARCH_X86)
         // simd 256 bit
         if (proc & core::t_simd_set_256bit && check_aligned) {
 
@@ -212,6 +212,7 @@ namespace tImage {
             // }
 
         }
+        #endif
         // simd 128 bit
         if (proc & core::t_simd_set_128bit && check_aligned) {
 
@@ -263,7 +264,6 @@ namespace tImage {
 
             // }
         } else
-        // #endif
         // normal
         {
 
