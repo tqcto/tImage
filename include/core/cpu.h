@@ -3,11 +3,11 @@
 
 #include <thread>
 
-#if defined(T_MS)
+#if defined(TIMAGE_ARCH_X86) && defined(T_MS)
 
 #include <intrin.h>
 
-#elif defined(T_GCC)
+#elif defined(TIMAGE_ARCH_X86) && defined(T_GCC)
 
 #include <cpuid.h>
 
@@ -44,7 +44,7 @@ namespace core {
     };
 
     // MS
-    #if defined(T_MS)
+    #if defined(TIMAGE_ARCH_X86) && defined(T_MS)
     
     // get cpuid
     inline void get_cpuid(t_int* p, t_int i) {
@@ -59,7 +59,7 @@ namespace core {
     }
 
     // GCC
-    #elif defined(T_GCC)
+    #elif defined(TIMAGE_ARCH_X86) && defined(T_GCC)
 
     // get cpuid
     inline void get_cpuid(t_int* p, t_int i) {
@@ -82,6 +82,7 @@ namespace core {
 
         cpu_info() : vendor{t_cpu_vendor_Unknown}, processor{t_cpu_processor_None} {
 
+            #if defined(TIMAGE_ARCH_X86)
             // array of information
             // info[0] = EAX
             // info[1] = EBX
@@ -182,6 +183,9 @@ namespace core {
             }
 
             this->num_cores = std::thread::hardware_concurrency();
+            #else
+            this->num_cores = std::thread::hardware_concurrency();
+            #endif
 
         }
 

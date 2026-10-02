@@ -1,4 +1,3 @@
-#pragma once
 #include "../../../include/core/parallel/parallel.h"
 
 namespace tImage {
