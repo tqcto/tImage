@@ -3,8 +3,7 @@
 #include <tImage.h>
 #include <core/cpu.h>
 #include <core/mem/align.h>
-#include <core/simd/intrin_ssse3.h>
-#include <core/simd/intrin_avx.h>
+#include <core/simd/simd.h>
 #include <core/parallel/parallel.h>
 
 // using in debug
