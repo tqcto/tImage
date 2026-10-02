@@ -69,6 +69,14 @@ add_subdirectory(thirdparty/libjpeg)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64|i[3-6]86)$" OR
    CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "^(X86|x64)$")
     set(TIMAGE_TARGET_X86 TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$" OR
+    CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64" OR
+    (CMAKE_SYSTEM_PROCESSOR MATCHES "^armv8.*" AND CMAKE_SIZEOF_VOID_P EQUAL 8))
+    set(TIMAGE_TARGET_ARM TRUE)
+    set(TIMAGE_TARGET_ARM64 TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|ARM|armv[0-9].*|thumb.*)$" OR
+       CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM")
+    set(TIMAGE_TARGET_ARM TRUE)
 endif()
 
 if(MSVC AND TIMAGE_TARGET_X86 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -112,17 +120,20 @@ if(TIMAGE_TARGET_X86)
     if(MSVC)
         set_source_files_properties(src/tool/swap.cpp PROPERTIES
             COMPILE_OPTIONS "/arch:AVX2")
-        target_compile_definitions(tImage PRIVATE TIMAGE_ENABLE_X86_SIMD)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         include(CheckCXXCompilerFlag)
         check_cxx_compiler_flag("-mavx2" TIMAGE_COMPILER_SUPPORTS_AVX2)
         if(TIMAGE_COMPILER_SUPPORTS_AVX2)
             set_source_files_properties(src/tool/swap.cpp PROPERTIES
                 COMPILE_OPTIONS "-mavx2")
-            target_compile_definitions(tImage PRIVATE TIMAGE_ENABLE_X86_SIMD)
         else()
-            message(STATUS "AVX2 compiler support is unavailable; x86 SIMD in swap.cpp is disabled")
+            message(FATAL_ERROR "The selected x86 compiler does not support -mavx2, which is required by swap.cpp")
         endif()
+    endif()
+elseif(TIMAGE_TARGET_ARM)
+    target_compile_definitions(tImage PUBLIC TIMAGE_ARCH_ARM)
+    if(TIMAGE_TARGET_ARM64)
+        target_compile_definitions(tImage PUBLIC TIMAGE_ARCH_ARM64)
     endif()
 endif()
 if(ASM_SOURCES)
