@@ -28,12 +28,12 @@ jobs:
             shared: "OFF"
             generator: Visual Studio 17 2022
             build_dir: build/ci-windows-static
-          - os: ubuntu-22.04
+          - os: ubuntu-22.04-arm
             kind: shared
             shared: "ON"
             generator: Ninja
             build_dir: build/ci-linux-shared
-          - os: ubuntu-22.04
+          - os: ubuntu-22.04-arm
             kind: static
             shared: "OFF"
             generator: Ninja
