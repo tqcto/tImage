@@ -1,8 +1,10 @@
 #include "../../include/tool/swap.h"
 #include "../../include/core/cpu.h"
 #include "../../include/core/codec/codec.h"
+#if defined(TIMAGE_ARCH_X86)
 #include "../../include/core/simd/intrin_avx.h"
 #include "../../include/core/simd/intrin_ssse3.h"
+#endif
 #include "../../include/core/parallel/threadPool.h"
 
 // #include <omp.h>
@@ -41,6 +43,7 @@ namespace tImage {
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 16) && check_big_align(dst->align(), 16);
 
+        #if defined(TIMAGE_ARCH_X86)
         // simd 128 bit
         if (proc & core::t_cpu_processor_SSSE3 && check_aligned) {
 
@@ -94,9 +97,10 @@ namespace tImage {
 
             // }
 
-        }
+        } else
+        #endif
         // normal
-        else {
+        {
 
             threadPool.pfor(0, height, [src, dst, width](t_int y) {
                 
@@ -149,6 +153,7 @@ namespace tImage {
         // check aligned
         const t_bool check_aligned = check_big_align(src->align(), 32) && check_big_align(dst->align(), 32);
 
+        #if defined(TIMAGE_ARCH_X86)
         // simd 256 bit
         if (proc & core::t_cpu_processor_AVX && check_aligned) {
 
@@ -255,9 +260,10 @@ namespace tImage {
             //     }
 
             // }
-        }
+        } else
+        #endif
         // normal
-        else {
+        {
 
             threadPool.pfor(0, height, [src, dst, width](t_int y) {
                 

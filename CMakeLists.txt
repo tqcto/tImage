@@ -66,10 +66,14 @@ add_subdirectory(thirdparty/libjpeg)
 # ------------------------------------------------------------------------------
 # 4. tImage ライブラリターゲットの作成
 # ------------------------------------------------------------------------------
-if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64|i[3-6]86)$" OR
+   CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "^(X86|x64)$")
+    set(TIMAGE_TARGET_X86 TRUE)
+endif()
+
+if(MSVC AND TIMAGE_TARGET_X86 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     enable_language(ASM_MASM)
     set(ASM_SOURCES src/core/cpuid_msvc_x64.asm)
-    add_compile_definitions(T_USE_ASM)
 endif()
 
 set(TIMAGE_SOURCES
@@ -101,6 +105,13 @@ if(ASM_SOURCES)
 endif()
 
 add_library(tImage ${TIMAGE_SOURCES})
+
+if(TIMAGE_TARGET_X86)
+    target_compile_definitions(tImage PUBLIC TIMAGE_ARCH_X86)
+endif()
+if(ASM_SOURCES)
+    target_compile_definitions(tImage PRIVATE T_USE_ASM)
+endif()
 
 # インクルードパスの設定 (PUBLICにすることで依存元からもヘッダーを参照可能に設定)
 target_include_directories(tImage 
