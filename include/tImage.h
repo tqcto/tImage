@@ -7,7 +7,7 @@
 // #include "core/cpu.h"
 
 #include "image/Matrix.h"
-#include "image/image.h"
+#include "image/Image.h"
 #include "image/MatrixConverter.h"
 
 #include "core/stride.h"
