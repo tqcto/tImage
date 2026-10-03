@@ -193,8 +193,8 @@ namespace tImage {
             // ここをSIMD化したい
             for (t_int c = 0; c < 4; ++c) {
              
-                dst->data[bm_start * dst->stride() + bn_start << 1 + c] =
-                    src->data[am_start * src->stride() + an_start << 1 + c];
+                dst->data[bm_start * dst->stride() + (bn_start << 1) + c] =
+                    src->data[am_start * src->stride() + (an_start << 1) + c];
 
             }
             // **************************************************************************** //

@@ -202,7 +202,7 @@ namespace tImage {
 
 	t_bool Image::empty() const noexcept {
 
-		return !(this->data != nullptr | this->_cols | this->_rows | this->format.channels);
+		return !((this->data != nullptr) | this->_cols | this->_rows | this->format.channels);
 
 	}
 
