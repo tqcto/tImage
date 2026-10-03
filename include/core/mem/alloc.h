@@ -21,14 +21,14 @@ namespace mem {
 
         #if T_MS || T_MINGW32
         
-        return reinterpret_cast<T*>(_aligned_malloc(bytes, alignment));
+        return (T*)(_aligned_malloc(bytes, alignment));
         
         #else
 
         void* p = nullptr;
         if (posix_memalign(&p, alignment, bytes) != 0) return nullptr;
         
-        return reinterpret_cast<T*>(p);
+        return (T*)(p);
         
         #endif
 
