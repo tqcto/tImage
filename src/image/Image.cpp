@@ -14,7 +14,7 @@
 
 namespace tImage {
 
-	t_err Image::_allocate_memory() {
+	inline t_err Image::_allocate_memory() {
 
 		// calc stride
 		this->_stride = core::calcStride(this->_cols, this->format.channels, this->depth(), this->_align);
