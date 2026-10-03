@@ -97,7 +97,7 @@ namespace tImage {
         }
 
         inline t_bool is_aligned(void) const noexcept {
-            return core::mem::check_align(this->data, this->align);
+            return core::mem::check_align(this->data, this->_align);
         }
 
 		/* Input image of other memory*/
@@ -175,7 +175,7 @@ namespace tImage {
 		/* Get whether class is empty. If empty then returned true. */
 		inline t_bool empty() const noexcept {
 
-            return !(this->data != nullptr | this->_cols | this->_rows);
+            return !((this->data != nullptr) | this->_cols | this->_rows);
 
         }
 
