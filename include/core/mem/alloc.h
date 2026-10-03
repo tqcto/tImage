@@ -16,6 +16,9 @@ namespace mem {
         t_uint64 bytes, t_uint64 alignment = alignof(T)
     ) noexcept {
 
+        constexpr t_uint64 min_align = sizeof(void*);
+        if (alignment < min_align) alignment = min_align;
+
         #if T_MS || T_MINGW32
         
         return reinterpret_cast<T*>(_aligned_malloc(bytes, alignment));

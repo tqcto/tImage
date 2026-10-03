@@ -89,7 +89,7 @@ namespace tImage {
 		/* Set align. Only powers of 2 can be specified. */
 		inline t_err setAlign(t_uint align) {
 
-            if (align & (align - 1) && !(this->data)) return t_err_InvalidArgument;
+            if (!(align & (align - 1)) && !(this->data)) return t_err_InvalidArgument;
             
             this->_align = align;
             return t_err_None;
