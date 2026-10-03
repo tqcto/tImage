@@ -23,7 +23,7 @@ namespace mem {
         #else
 
         void* p = nullptr;
-        if (!posix_memalign(&p, alignment, bytes)) return nullptr;
+        if (posix_memalign(&p, alignment, bytes) != 0) return nullptr;
         
         return reinterpret_cast<T*>(p);
         
