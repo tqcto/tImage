@@ -56,6 +56,20 @@ namespace simd {
     }
     /*\<******************************************* shuffle *******************************************\>*/
 
+    struct v_float32x4 {
+        
+        __m128 v;
+
+        explicit inline v_float32x4(void) {} 
+        explicit inline v_float32x4(__m128 v) : v(v) {}
+
+        inline v_float32x4(
+            t_float v0, t_float v1, t_float v2, t_float v3
+        ) : v(_mm_set_ps(v3, v2, v1, v0)) {}
+    };
+
+    inline void v128
+
 }
 }
 }

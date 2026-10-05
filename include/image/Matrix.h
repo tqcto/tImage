@@ -180,7 +180,7 @@ namespace tImage {
         }
 
         // 書き込み用行ポインタを取得
-        inline T* rowPtr(t_uint row) noexcept {
+        inline T* rowPtr(t_uint row) const noexcept {
 
             return &this->data[row * this->_elements_row];
 

@@ -95,7 +95,7 @@ typedef struct _t_intpoint2d {
 	t_int x;
 	t_int y;
 
-	explicit _t_intpoint2d(t_int x, t_int y) : x{x}, y{y} {}
+	explicit inline _t_intpoint2d(t_int x, t_int y) : x{x}, y{y} {}
 
 }t_point2d;
 
@@ -104,9 +104,18 @@ typedef struct _t_uintpoint2d {
 	t_uint x;
 	t_uint y;
 
-	explicit _t_uintpoint2d(t_uint x, t_uint y) : x{x}, y{y} {}
+	explicit inline _t_uintpoint2d(t_uint x, t_uint y) : x{x}, y{y} {}
 
 }t_uintpoint2d;
+
+typedef struct _t_floatpoint2d {
+
+	t_float x;
+	t_float y;
+
+	explicit inline _t_floatpoint2d(t_float x, t_float y) : x{x}, y{y} {}
+
+}t_floatpoint2d;
 
 #define T_IMAGE_DEFAULT_ALIGN	32
 /*
