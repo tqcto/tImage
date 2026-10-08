@@ -27,6 +27,19 @@ namespace simd {
 
     };
 
+    struct v_float32x4 {
+        
+        __m128 v;
+
+        explicit inline v_float32x4(void) {} 
+        explicit inline v_float32x4(__m128 v) : v(v) {}
+
+        inline v_float32x4(
+            t_float v0, t_float v1, t_float v2, t_float v3
+        ) : v(_mm_set_ps(v3, v2, v1, v0)) {}
+
+    };
+
     /*<******************************************* load *******************************************>*/
     // load aligned 8x16 bit integer to 128 bit register
     inline void v128_load_8x16_aligned(t_uchar* src, v_uint8x16& dst) {
@@ -35,6 +48,15 @@ namespace simd {
     // load uchar 8x16 bit integer to 128 bit register
     inline void v128_load_8x16(t_uchar* src, v_uint8x16& dst) {
         dst.v = _mm_lddqu_si128 (reinterpret_cast<const __m128i*>(src));
+    }
+
+    // load aligned 32x4 bit float to 128 bit register
+    inline void v128_load_32x4_aligned(t_float* src, v_float32x4& dst) {
+        dst.v = _mm_load_ps(src);
+    }
+    // load unaligned 32x4 bit float to 128 bit register
+    inline void v128_load_32x4(t_float* src, v_float32x4& dst) {
+        dst.v = _mm_loadu_ps(src);
     }
     /*\<******************************************* load *******************************************\>*/
 
@@ -47,6 +69,15 @@ namespace simd {
     inline void v128_store_8x16(v_uint8x16& src, t_uchar* dst) {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dst), src.v);
     }
+
+    // store 128 bit register to aligned 32x4 bit float
+    inline void v128_store_32x4_aligned(v_float32x4& src, t_float* dst) {
+        _mm_store_ps(dst, src.v);
+    }
+    // store 128 bit register to unaligned 32x4 bit float
+    inline void v128_store_32x4(v_float32x4& src, t_float* dst) {
+        _mm_storeu_ps(dst, src.v);
+    }
     /*\<******************************************* store *******************************************\>*/
 
     /*<******************************************* shuffle *******************************************>*/
@@ -54,21 +85,12 @@ namespace simd {
     inline void v128_shuffle_8x16(v_uint8x16& src, v_uint8x16& dst, const v_uint8x16& mask) {
         dst.v = _mm_shuffle_epi8(src.v, mask.v);
     }
+
+    // shuffle 128 bit register by mask
+    // inline void v128_shuffle_32x4(v_float32x4& src, v_float32x4& dst, const v_float32x4& mask) {
+    //     dst.v = _mm_shuffle_ps(src.v, mask.v);
+    // }
     /*\<******************************************* shuffle *******************************************\>*/
-
-    struct v_float32x4 {
-        
-        __m128 v;
-
-        explicit inline v_float32x4(void) {} 
-        explicit inline v_float32x4(__m128 v) : v(v) {}
-
-        inline v_float32x4(
-            t_float v0, t_float v1, t_float v2, t_float v3
-        ) : v(_mm_set_ps(v3, v2, v1, v0)) {}
-    };
-
-    inline void v128
 
 }
 }
