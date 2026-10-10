@@ -21,6 +21,7 @@
 #include "tool/merge.h"
 #include "tool/swap.h"
 #include "tool/transpose.h"
+#include "tool/resize.h"
 #include "tool/padding.h"
 #include "tool/fft.h"
 

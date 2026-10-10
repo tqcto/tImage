@@ -105,6 +105,7 @@ set(TIMAGE_SOURCES
     src/tool/split.cpp
     src/tool/swap.cpp
     src/tool/transpose.cpp
+    src/tool/resize.cpp
     src/tool/padding.cpp
     src/tool/fft.cpp
 

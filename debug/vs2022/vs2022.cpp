@@ -695,20 +695,36 @@ void test_threadPool(void) {
 
 void test_resize(Image* src) {
 
-	t_float center_x = static_cast<t_float>(src->width()) / 2.f;
-	t_float center_y = static_cast<t_float>(src->height()) / 2.f;
+	t_floatpoint2d center(
+		static_cast<t_float>(src->width()) / 2.f,
+		static_cast<t_float>(src->height()) / 2.f
+	);
+	
+	printf("x0.5\n");
+	t_floatpoint2d scale(.5f, .5f);
 
-	t_float scalex = .5f;
-	t_float scaley = .5f;
-
-	t_uint new_width = static_cast<t_uint>(static_cast<t_float>(src->width()) * scalex + .5f);
-	t_uint new_height = static_cast<t_uint>(static_cast<t_float>(src->height()) * scaley + .5f);
-	Image dst(new_width, new_height, src->channels(), src->colorType());
+	t_uintpoint2d dstScale = calcDstScale(src->width(), src->height(), scale);
+	Image dst(dstScale.x, dstScale.y, src->channels(), src->colorType());
 	// Image dst(src->width(), src->height(), src->channels(), src->colorType());
 
-	resize(src, &dst, t_floatpoint2d(scalex, scaley), t_floatpoint2d(center_x, center_y));
-
+	resize(src, &dst, scale, center);
 	encodeJPEG(&dst, "resized0.5.jpg");
+
+	printf("x15\n");
+	scale = t_floatpoint2d(1.5f, 1.5f);
+	dst.release();
+	dstScale = calcDstScale(src->width(), src->height(), scale);
+	dst.allocate(dstScale.x, dstScale.y, src->channels(), src->colorType());
+	resize(src, &dst, scale, center);
+	encodeJPEG(&dst, "resized1.5.jpg");
+
+	printf("x1.5, x0.5\n");
+	scale = t_floatpoint2d(1.5f, .5f);
+	dst.release();
+	dstScale = calcDstScale(src->width(), src->height(), scale);
+	dst.allocate(dstScale.x, dstScale.y, src->channels(), src->colorType());
+	resize(src, &dst, scale, center);
+	encodeJPEG(&dst, "resizedhalf.jpg");
 
 }
 
@@ -752,7 +768,7 @@ t_int main(void) {
 
 	}
 
-	printf("resize\n");
+	printf("[resize]\n");
 	test_resize(&src);
 
 	// printf("number of cores:%d\n", core::t_CPU_INFO.num_cores);
