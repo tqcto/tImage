@@ -14,6 +14,7 @@
 // #include "manage/manage.h"
 #include "core/codec/png.h"
 #include "core/codec/jpeg.h"
+#include "core/ip/ip.h"
 
 #include "geometry/affine.h"
 
