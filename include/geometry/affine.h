@@ -4,6 +4,6 @@
 
 namespace tImage {
 
-    DLL_EXPORT void resize(const Image* src, Image* dst, t_float scale_x, t_float scale_y);
+    DLL_EXPORT t_err resize(const Image* src, Image* dst, t_floatpoint2d scale, _t_floatpoint2d center);
 
 }

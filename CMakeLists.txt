@@ -99,6 +99,8 @@ set(TIMAGE_SOURCES
     src/core/parallel/parallel.cpp
     src/core/parallel/threadPool.cpp
 
+    src/geometry/affine.cpp
+
     src/tool/merge.cpp
     src/tool/split.cpp
     src/tool/swap.cpp

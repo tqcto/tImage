@@ -693,6 +693,25 @@ void test_threadPool(void) {
 
 }
 
+void test_resize(Image* src) {
+
+	t_float center_x = static_cast<t_float>(src->width()) / 2.f;
+	t_float center_y = static_cast<t_float>(src->height()) / 2.f;
+
+	t_float scalex = .5f;
+	t_float scaley = .5f;
+
+	t_uint new_width = static_cast<t_uint>(static_cast<t_float>(src->width()) * scalex + .5f);
+	t_uint new_height = static_cast<t_uint>(static_cast<t_float>(src->height()) * scaley + .5f);
+	Image dst(new_width, new_height, src->channels(), src->colorType());
+	// Image dst(src->width(), src->height(), src->channels(), src->colorType());
+
+	resize(src, &dst, t_floatpoint2d(scalex, scaley), t_floatpoint2d(center_x, center_y));
+
+	encodeJPEG(&dst, "resized0.5.jpg");
+
+}
+
 t_int main(void) {
 
 	//test_Matrix();
@@ -732,6 +751,9 @@ t_int main(void) {
 		test_avx();
 
 	}
+
+	printf("resize\n");
+	test_resize(&src);
 
 	// printf("number of cores:%d\n", core::t_CPU_INFO.num_cores);
 	// core::t_CPU_SET_NUM_LOGICAL_CORES(3);

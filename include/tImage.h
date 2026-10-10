@@ -15,6 +15,8 @@
 #include "core/codec/png.h"
 #include "core/codec/jpeg.h"
 
+#include "geometry/affine.h"
+
 #include "tool/split.h"
 #include "tool/merge.h"
 #include "tool/swap.h"
