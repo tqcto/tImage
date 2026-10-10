@@ -56,7 +56,8 @@ namespace tImage {
 
             const t_float source_y = std::clamp(
                 (static_cast<t_float>(y) - destination_center_y) / scale.y + center.y,
-                0.f, static_cast<t_float>(height - 1));
+                0.f, static_cast<t_float>(height - 1)
+            );
             const t_uint source_y_index = static_cast<t_uint>(std::round(source_y));
             auto src_rowptr = src->rowPtr(source_y_index);
             auto dst_rowptr = dst->rowPtr(static_cast<t_uint>(y));
@@ -65,16 +66,20 @@ namespace tImage {
 
                 const t_float source_x = std::clamp(
                     (static_cast<t_float>(x) - destination_center_x) / scale.x + center.x,
-                    0.f, static_cast<t_float>(width - 1));
+                    0.f, static_cast<t_float>(width - 1)
+                );
                 const t_uint source_x_index = static_cast<t_uint>(std::round(source_x));
 
                 for (t_int c = 0; c < channels; c++) {
                     dst_rowptr[x * channels + c] = src_rowptr[source_x_index * channels + c];
                 }
+
             }
+
         });
 
         return t_err_None;
+        
     }
 
 }
