@@ -92,6 +92,18 @@ namespace simd {
     // }
     /*\<******************************************* shuffle *******************************************\>*/
 
+    /*<******************************************* round *******************************************>*/
+    // round 128 bit float register
+    inline void v128_round_float32x4(v_float32x4& src, v_float32x4& dst) {
+        dst.v = _mm_round_ps(src.v, (_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC));
+    }
+
+    // round 128 bit double register
+    // inline void v128_round_float64x2(v_float64x2& src, v_float64x2& dst) {
+    //     dst.v = _mm_round_pd(src.v, (_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC));
+    // }
+    /*\<******************************************* round *******************************************\>*/
+
 }
 }
 }
