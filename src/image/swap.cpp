@@ -8,6 +8,7 @@
 #include "../../include/core/simd/simd.h"
 #include "../../include/core/parallel/threadPool.h"
 
+#include <stdio.h>
 // #include <omp.h>
 
 namespace tImage {
@@ -215,6 +216,8 @@ namespace tImage {
         #endif
         // simd 128 bit
         if (proc & core::t_simd_set_128bit && check_aligned) {
+
+            printf("simd 128bit\n");
 
             const t_int loop = src->elementsRow() >> 2;
 
