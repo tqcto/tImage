@@ -5,63 +5,6 @@
 
 namespace tImage {
 
-    void REC_TRANSPOSE_complex(
-        Matrix<t_float>* src_real, Matrix<t_float>* src_imag,
-        Matrix<t_float>* dst_real, Matrix<t_float>* dst_imag,
-        t_uint am_start, t_uint an_start,
-        t_uint bm_start, t_uint bn_start,
-        t_uint m, t_uint n,
-        core::parallel::threadPool* threadPool
-    ) {
-
-
-        // 32x32ブロックならキャッシュに乗り，十分高速化可能な範囲に入る．
-        // ブロックをこれより小さくすると，再帰処理のオーバーヘッドが大きくなり，逆に遅くなる．
-        if (m <= 32 && n <= 32) {
-
-            threadPool->pfor(0, m, [n, an_start, am_start, bn_start, bm_start, src_real, src_imag, dst_real, dst_imag](t_int y) {
-                
-                auto src_real_rowptr = src_real->rowPtr(am_start + y);
-                auto src_imag_rowptr = src_imag->rowPtr(am_start + y);
-
-                for (t_int x = 0; x < n; x++) {
-
-                    auto dst_real_rowptr = dst_real->rowPtr(bm_start + x);
-                    auto dst_imag_rowptr = dst_imag->rowPtr(bm_start + x);
-
-                    dst_real_rowptr[bn_start + y] = src_real_rowptr[an_start + x];
-                    dst_imag_rowptr[bn_start + y] = src_imag_rowptr[an_start + x];
-
-                }
-
-            });
-            return;
-
-        }
-
-        // このとき，行列srcを左右に，行列dstを上下に分割
-        if (n >= m) {
-
-            const t_uint floor = n >> 1;
-            const t_uint ceil = (n + 1) >> 1;
-
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, m, floor, threadPool);                  // (A_1, B_1)
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start + floor, bm_start + floor, bn_start, m, ceil, threadPool);   // (A_2, B_2)
-
-        }
-        // このとき，行列srcを上下に，行列dstを左右に分割
-        else {
-
-            const t_uint floor = m >> 1;
-            const t_uint ceil = (m + 1) >> 1;
-
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start, an_start, bm_start, bn_start, floor, n, threadPool);                  // (A_1, B_1)
-            REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n, threadPool);   // (A_2, B_2)
-
-        }
-
-    }
-
     // 汎用
     void REC_TRANSPOSE_any(
         const Image* src, Image* dst,
@@ -223,21 +166,6 @@ namespace tImage {
             REC_TRANSPOSE_4ch(src, dst, am_start + floor, an_start, bm_start, bn_start + floor, ceil, n);   // (A_2, B_2)
 
         }
-
-    }
-
-    t_err transpose(
-        Matrix<t_float>* src_real, Matrix<t_float>* src_imag,
-        Matrix<t_float>* dst_real, Matrix<t_float>* dst_imag
-    ) {
-
-        const t_uint cols = src_real->cols();
-        const t_uint rows = src_real->rows();
-        core::parallel::threadPool threadPool;
-
-        REC_TRANSPOSE_complex(src_real, src_imag, dst_real, dst_imag, 0, 0, 0, 0, rows, cols, &threadPool);
-
-        return t_err_None;
 
     }
 

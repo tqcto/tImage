@@ -3,6 +3,8 @@
 #include <tImage.h>
 #include <core/cpu.h>
 #include <core/mem/align.h>
+#include <core/mem/alloc.h>
+#include <core/mem/release.h>
 #include <core/simd/simd.h>
 #include <core/parallel/parallel.h>
 
@@ -22,6 +24,7 @@ using namespace tImage;
 #define PRE_LOG
 #endif
 
+/*
 void test_Fourier1d(void) {
 
 	//const t_uint N = 1920 * 1080 * 3;
@@ -77,14 +80,6 @@ void test_Fourier1d(void) {
 	}
 	#endif
 
-	/*
-	printf("start dft:\n");
-	fourier1d.dft();
-	printf("start idft:\n");
-	fourier1d.idft();
-	printf("end.\n");
-	*/
-
 	free(src_real);
 	free(src_imag);
 	free(fftdst_real);
@@ -128,17 +123,6 @@ void test_fft(void) {
 		PRE_LOG("[%u] : %f + %fi\n", i, dst_real[i], dst_imag[i]);
 	}
 	#endif
-
-	/*
-	printf("apply low pass filter:\n");
-	for (t_uint i = 0; i < paddedN; i++) {
-		if (i > 10) {
-			dst_real[i] = 0.f;
-			dst_imag[i] = 0.f;
-		}
-		printf("[%u] : %f + %fi\n", i, dst_real[i], dst_imag[i]);
-	}
-	*/
 
 	ifft1d(dst_real, dst_imag, src_real, src_imag, tmp_real, tmp_imag, paddedN);
 	
@@ -187,6 +171,7 @@ void test_Matrix(void) {
 	mat.release();
 
 }
+*/
 
 void test_transpose(void) {
 
@@ -200,75 +185,7 @@ void test_transpose(void) {
 
 }
 
-void test_transpose_complex(void) {
-
-	const t_uint cols = 3;
-	const t_uint rows = 5;
-
-	Matrix<t_float> real(cols, rows);
-	Matrix<t_float> imag(cols, rows);
-
-	Matrix<t_float> dst_real(rows, cols);
-	Matrix<t_float> dst_imag(rows, cols);
-
-	for (t_int i = 0; i < rows; i++) {
-		auto real_rowptr= real.rowPtr(i);
-		auto imag_rowptr= imag.rowPtr(i);		
-		for (t_int j = 0; j < cols; j++) {
-
-			real_rowptr[j] = j + 1;
-			imag_rowptr[j] = i - j;
-
-		}
-	}
-
-	printf("src real:\n");
-	for (t_int i = 0; i < rows; i++) {
-		auto rowptr= real.rowPtr(i);		
-		for (t_int j = 0; j < cols; j++) {
-
-			printf("%lf ", rowptr[j]);
-
-		}
-		printf("\n");
-	}
-	printf("src imag:\n");
-	for (t_int i = 0; i < rows; i++) {
-		auto rowptr= imag.rowPtr(i);		
-		for (t_int j = 0; j < cols; j++) {
-
-			printf("%lf ", rowptr[j]);
-
-		}
-		printf("\n");
-	}
-
-	transpose(&real, &imag, &dst_real, &dst_imag);
-
-	printf("dst real:\n");
-	for (t_int i = 0; i < dst_real.rows(); i++) {
-		auto rowptr = dst_real.rowPtr(i);		
-		for (t_int j = 0; j < dst_real.cols(); j++) {
-
-			printf("%lf ", rowptr[j]);
-
-		}
-		printf("\n");
-	}
-
-	printf("dst imag:\n");
-	for (t_int i = 0; i < dst_imag.rows(); i++) {
-		auto rowptr = dst_imag.rowPtr(i);		
-		for (t_int j = 0; j < dst_imag.cols(); j++) {
-
-			printf("%lf ", rowptr[j]);
-
-		}
-		printf("\n");
-	}
-
-}
-
+/*
 void test_Fourier2dBlock(void) {
 
 	const t_uint cols = 3840;
@@ -283,21 +200,6 @@ void test_Fourier2dBlock(void) {
 	Matrix<t_float> dst_imag(padded_cols, padded_rows);
 	Matrix<t_float> ifft_real(padded_cols, padded_rows);
 	Matrix<t_float> ifft_imag(padded_cols, padded_rows);
-
-	printf("source matrix:\n");
-	/*
-	for (t_int y = 0; y < padded_rows; y++) {
-		auto rowptr = src_real.rowPtr(y);
-		for (t_int x = 0; x < padded_cols; x++) {
-
-			rowptr[x] = (x < cols && y < rows) ? x + y * cols : 0.0f;
-			src_imag.rowPtr(y)[x] = 0.0f;
-			if (x < cols && y < rows) printf("%lf ", rowptr[x]);
-
-		}
-		if (y < rows) printf("\n");
-	}
-	*/
 
 	Fourier2dWorkspace ws{};
 	ws.block_src_real = (t_float*)malloc(sizeof(t_float) * block_size * block_size);
@@ -315,44 +217,8 @@ void test_Fourier2dBlock(void) {
 	fourier.PrePlan(&src_real, &src_imag, &dst_real, &dst_imag, &ifft_real, &ifft_imag, &ws);
 	fourier.fft();
 
-	printf("trasformed matrix real:\n");
-	/*
-	for (t_int y = 0; y < rows; y++) {
-		auto rowptr = dst_real.rowPtr(y);
-		for (t_int x = 0; x < cols; x++) {
-
-			printf("%lf ", rowptr[x]);
-
-		}
-		printf("\n");
-	}
-	*/
-	printf("trasformed matrix imag:\n");
-	/*
-	for (t_int y = 0; y < rows; y++) {
-		auto rowptr = dst_imag.rowPtr(y);
-		for (t_int x = 0; x < cols; x++) {
-
-			printf("%lf ", rowptr[x]);
-
-		}
-		printf("\n");
-	}
-	*/
-	
 	fourier.ifft();
 
-	printf("inverse matrix real:\n");
-	/*
-	for (t_int y = 0; y < rows; y++) {
-		auto rowptr = ifft_real.rowPtr(y);
-		for (t_int x = 0; x < cols; x++) {
-			printf("%lf ", rowptr[x]);
-		}
-		printf("\n");
-	}
-	*/
-	
 	free(ws.block_src_real);
 	free(ws.block_src_imag);
 	free(ws.block_fft_real);
@@ -382,21 +248,6 @@ void test_Fourier2d(void) {
 	Matrix<t_float> ifft_imag(padded_cols, padded_rows);
 
 	printf("elements row:%d, col:%d\n", src_real.elementsRow(), src_real.rows());
-
-	printf("source matrix:\n");
-	// /*
-	for (t_int y = 0; y < padded_rows; y++) {
-		auto rowptr = src_real.rowPtr(y);
-		for (t_int x = 0; x < padded_cols; x++) {
-
-			rowptr[x] = static_cast<t_float>(x + y * cols);
-			src_imag.rowPtr(y)[x] = 0.0f;
-			PRE_LOG("%f ", rowptr[x]);
-
-		}
-		printf("\n");
-	}
-	// */
 
 	Fourier2d fourier;
 	t_uint64 size = fourier.PreSetup(
@@ -455,56 +306,7 @@ void test_Fourier2d(void) {
 	free(buffer);
 
 }
-
-void test_Image2Matrix(void) {
-
-	const t_uint width = 10;
-	const t_uint height = 10;
-	const t_uint channels = 1;
-
-	Image src(width, height, channels, core::codec::t_colorType_RGB);
-	Matrix<t_float> dst(width, height);
-
-	const t_uchar s = 255 / (width - 1);
-	printf("src:\n");
-	for (t_int y = 0; y < height; y++) {
-		auto* rowptr = src.rowPtr(y);
-		for (t_int x = 0; x < width; x++) {
-
-			rowptr[x] = x * s;
-			printf("%d ", rowptr[x]);
-
-		}
-		printf("\n");
-	}
-
-	Image2Matrix(&src, &dst);
-
-	printf("dst:\n");
-	for (t_int y = 0; y < height; y++) {
-		auto* rowptr = dst.rowPtr(y);
-		for (t_int x = 0; x < width; x++) {
-
-			printf("%f ", rowptr[x]);
-
-		}
-		printf("\n");
-	}
-
-	Matrix2Image(&dst, &src);
-
-	printf("pullback:\n");
-	for (t_int y = 0; y < height; y++) {
-		auto* rowptr = src.rowPtr(y);
-		for (t_int x = 0; x < width; x++) {
-
-			printf("%d ", rowptr[x]);
-
-		}
-		printf("\n");
-	}
-
-}
+*/
 
 void grayscale(Image* src, Image* dst) {
 
@@ -736,7 +538,6 @@ t_int main(void) {
 	//test_Fourier1d();
 
 	test_transpose();
-	test_transpose_complex();
 	// test_Fourier2dBlock();
 
 	// test_Fourier2d();

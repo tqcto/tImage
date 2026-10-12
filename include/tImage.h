@@ -6,9 +6,7 @@
 
 // #include "core/cpu.h"
 
-#include "image/Matrix.h"
 #include "image/Image.h"
-#include "image/MatrixConverter.h"
 
 #include "core/stride.h"
 // #include "manage/manage.h"
@@ -23,6 +21,6 @@
 #include "tool/transpose.h"
 #include "tool/resize.h"
 #include "tool/padding.h"
-#include "tool/fft.h"
+// #include "tool/fft.h"
 
 #endif

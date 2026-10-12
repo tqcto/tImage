@@ -90,7 +90,6 @@ set(TIMAGE_SOURCES
 
     src/image/Image.cpp
     src/image/swap.cpp
-    src/image/MatrixConverter.cpp
 
     src/core/stride.cpp
 
@@ -107,7 +106,7 @@ set(TIMAGE_SOURCES
     src/tool/transpose.cpp
     src/tool/resize.cpp
     src/tool/padding.cpp
-    src/tool/fft.cpp
+    # src/tool/fft.cpp
 
 )
 

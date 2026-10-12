@@ -1,6 +1,5 @@
 #pragma once
 #include "../tImage_definition.h"
-#include "Matrix.h"
 #include "../core/codec/codec.h"
 
 namespace tImage {
@@ -44,17 +43,25 @@ namespace tImage {
     // ex: RGB <-> BGR
 	DLL_EXPORT t_err swap(Image* src, Image* dst) noexcept;
 
-	class Image : public Matrix<t_uchar> {
+	class Image {
 
 	private:
 
-		// cols: t_uint _width = 0;
-		// rows: t_uint _height = 0;
+		t_uint _align = T_IMAGE_DEFAULT_ALIGN;	// 32byte align
+
+		t_uint _width = 0;
+		t_uint _height = 0;
+
+		t_uint64 _elements_row = 0;   // elements of a row
+		t_uint64 _stride = 0;	    // bytes of a row
 		
 		//t_uint _channels = 8;
 		//t_uint _depth = 8;		// Color depth. usually 8.
 		PixelFormat format;		// pixel format
 		//t_colorType _colorType = t_colorType_RGB;
+
+		// Is memory from external
+		t_bool _external_memory = false;
 
 		t_err _allocate_memory();
 
@@ -69,14 +76,12 @@ namespace tImage {
 	public:
 
 		// image data
-		// t_uchar* data = nullptr;
+		t_uchar* data = nullptr;
 
 		// initialize class
 
 		/* Initialize empty class */
 		DLL_EXPORT Image(void);
-		/* Delete */
-		Image(t_uint cols, t_uint rows) = delete;
 		/* Initialize class from allocate function */
 		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
 		/* Initialize class from allocate function */
@@ -86,7 +91,14 @@ namespace tImage {
 		DLL_EXPORT ~Image();
 
 		/* Set align. Only powers of 2 can be specified. */
-		// DLL_EXPORT t_err setAlign(t_uint align);
+		inline t_err setAlign(t_uint align) {
+
+            if ((align & (align - 1)) && !(this->data)) return t_err_InvalidArgument;
+            
+            this->_align = align;
+            return t_err_None;
+
+        }
 
 		/* Input image of other memory*/
 		DLL_EXPORT t_err input(
@@ -109,18 +121,32 @@ namespace tImage {
 		/* Get whether class is empty. If empty then returned true. */
 		DLL_EXPORT t_bool empty() const noexcept;
 
-		/* Delete */
-		t_uint cols() const noexcept = delete;
-		t_uint rows() const noexcept = delete;
+		// 書き込み用行ポインタを取得
+        inline t_uchar* rowPtr(t_uint row) const noexcept {
+
+            return &this->data[row * this->_elements_row];
+
+        }
 
 		/* Get width of image */
 		inline t_uint width() const noexcept {
-			return this->_cols;
+			return this->_width;
 		}
 		/* Get height of image */
 		inline t_uint height() const noexcept {
-			return this->_rows;
+			return this->_height;
 		}
+		// 1行の要素数を取得
+        inline t_uint64 elementsRow() const noexcept {
+            return this->_elements_row;
+        }
+		/* Get stride of image */
+		inline t_uint64 stride() const noexcept {
+            return this->_stride;
+        }
+        inline t_uint align() const noexcept {
+            return this->_align;
+        }
 		/* Get stride of image */
 		// DLL_EXPORT t_uint64 stride() const noexcept;
 		/* Get channels of image */

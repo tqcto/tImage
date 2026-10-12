@@ -4,6 +4,8 @@
 #include "../../include/core/codec/codec.h"
 #include "../../include/core/codec/png.h"
 #include "../../include/core/codec/jpeg.h"
+#include "../../include/core/mem/alloc.h"
+#include "../../include/core/mem/release.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,13 +19,13 @@ namespace tImage {
 	inline t_err Image::_allocate_memory() {
 
 		// calc stride
-		this->_stride = core::calcStride(this->_cols, this->format.channels, this->depth(), this->_align);
+		this->_stride = core::calcStride(this->_width, this->format.channels, this->depth(), this->_align);
 
 		// calc elements of a row
 		this->_elements_row = this->_stride / sizeof(t_uchar);
 
 		// total bytes
-		t_uint64 total_bytes = this->_stride * (t_uint64)this->_rows;
+		t_uint64 total_bytes = this->_stride * (t_uint64)this->_height;
 
 		this->data = core::mem::alignedMalloc<t_uchar>(total_bytes, this->_align);
 		// this->data = (t_uchar*)malloc(total_bytes);
@@ -130,8 +132,8 @@ namespace tImage {
 
 		err = !width || !height || !channels ? t_err_InvalidArgument : t_err_None;
 
-		this->_cols = width;
-		this->_rows = height;
+		this->_width = width;
+		this->_height = height;
 
 		this->format.channels = channels;
 		this->format.color_type = colorType;
@@ -154,8 +156,8 @@ namespace tImage {
 
 		if (!width || !height || !channels) return t_err_InvalidArgument;
 
-		this->_cols = width;
-		this->_rows = height;
+		this->_width = width;
+		this->_height = height;
 
 		this->format.channels = channels;
 		this->format.color_type = colorType;
@@ -173,8 +175,8 @@ namespace tImage {
 
 		if (!width || !height || !channels || !depth) return t_err_InvalidArgument;
 
-		this->_cols = width;
-		this->_rows = height;
+		this->_width = width;
+		this->_height = height;
 
 		this->format.channels = channels;
 		this->format.color_type = colorType;
@@ -188,11 +190,27 @@ namespace tImage {
 
 	}
 
+	/* Release memory */
 	void Image::release() {
 
-		Matrix<t_uchar>::release();
+		if (this->_external_memory) {
+		
+			//throw "External memory can't be release.";
+			return;
+		
+		}
 
-		if (this->_external_memory) return;
+		core::mem::alignedFree(this->data);
+		// free(this->data);
+		this->data = nullptr;
+		this->_external_memory = false;
+
+		//this->_align = T_IMAGE_DEFAULT_ALIGN;
+
+		this->_width = 0;
+		this->_height = 0;
+		this->_elements_row = 0;
+		this->_stride = 0;
 
 		this->format.bytes_per_pixel = 0;
 		this->format.channels = 0;
@@ -202,7 +220,7 @@ namespace tImage {
 
 	t_bool Image::empty() const noexcept {
 
-		return !((this->data != nullptr) | this->_cols | this->_rows | this->format.channels);
+		return !((this->data != nullptr) | this->_width | this->_height | this->format.channels);
 
 	}
 
@@ -250,9 +268,10 @@ namespace tImage {
 
 		return (
 			this->data == img.data &&
-			this->_cols == img.width() &&
-			this->_rows == img.height() &&
+			this->_width == img.width() &&
+			this->_height == img.height() &&
 			this->format.channels == img.channels() &&
+			this->colorType() == img.colorType() &&
 			this->depth() == img.depth() &&
 			this->_stride == img.stride()
 			) 
