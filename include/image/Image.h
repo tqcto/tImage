@@ -39,9 +39,11 @@ namespace tImage {
 
 	class Image;
 	
+	/*<******************************************* friend functions *******************************************>*/
 	// swap channels
     // ex: RGB <-> BGR
 	DLL_EXPORT t_err swap(Image* src, Image* dst) noexcept;
+	/*/<******************************************* friend functions *******************************************>/*/
 
 	class Image {
 
