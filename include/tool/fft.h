@@ -49,8 +49,8 @@ namespace tImage {
 
     public:
 
-        DLL_EXPORT Fourier1d(void);
-        //DLL_EXPORT ~Fourier();
+        LIB_EXPORT Fourier1d(void);
+        //LIB_EXPORT ~Fourier();
 
         // データサイズの指定と，FFT及びIFFTの入力・出力複素数メモリ，一時メモリの指定
         // _N : データ数（2の累乗数である必要あり）
@@ -60,7 +60,7 @@ namespace tImage {
         // _ifft_dst_real, _ifft_dst_imag : IFFT用出力データ列
         // _rot_buffer : 回転因子用バッファメモリ(サイズ: sizeof(t_float) * _N)
         // _index_buffer : ビット反転用インデックステーブルのメモリ(サイズ: sizeof(t_int) * _N)
-        DLL_EXPORT void PrePlan(
+        LIB_EXPORT void PrePlan(
             t_uint _N,
             
             t_float* _fft_src_real, t_float* _fft_src_imag,
@@ -76,19 +76,19 @@ namespace tImage {
         // _fft_dst_real, _fft_dst_imag : FFT用出力データ列
         // _ifft_src_real, _ifft_src_imag : IFFT用入力データ列
         // _ifft_dst_real, _ifft_dst_imag : IFFT用出力データ列
-        DLL_EXPORT void RePlan(
+        LIB_EXPORT void RePlan(
             t_float* _fft_src_real, t_float* _fft_src_imag,
             t_float* _fft_dst_real, t_float* _fft_dst_imag,
             t_float* _ifft_dst_real, t_float* _ifft_dst_imag
         );
 
-        DLL_EXPORT void fft(void);
-        DLL_EXPORT void ifft(void);
+        LIB_EXPORT void fft(void);
+        LIB_EXPORT void ifft(void);
 
         // ベンチマーク用の全く最適化していない離散フーリエ変換
         /*
-        DLL_EXPORT void dft(void);
-        DLL_EXPORT void idft(void);
+        LIB_EXPORT void dft(void);
+        LIB_EXPORT void idft(void);
         */
 
     };
@@ -120,7 +120,7 @@ namespace tImage {
                 Fourier1d* _block_fourier);
 
     public:
-        DLL_EXPORT Fourier2dBlock(void);
+        LIB_EXPORT Fourier2dBlock(void);
 
         // データサイズの指定と，FFT及びIFFTの入力・出力複素行列メモリ，一時メモリの指定
         // 行列の各行・各列は2の累乗数である必要がある
@@ -131,7 +131,7 @@ namespace tImage {
         // _ifft_dst_real, _ifft_dst_imag : IFFT用出力行列
         // blockSize は align / sizeof(t_float)。block 配列は blockSize * blockSize 要素、
         // その他の配列は blockSize 要素。
-        DLL_EXPORT void PrePlan(
+        LIB_EXPORT void PrePlan(
             Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
             Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
             Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
@@ -139,15 +139,15 @@ namespace tImage {
         );
 
         // 並列FFT用。_workspaces と各要素のバッファは呼び出し側が確保する。
-        DLL_EXPORT void PrePlan(
+        LIB_EXPORT void PrePlan(
             Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
             Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
             Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag,
             Fourier2dWorkspace* _workspaces, t_uint _workspace_count
         );
 
-        DLL_EXPORT void fft(void);
-        DLL_EXPORT void ifft(void);
+        LIB_EXPORT void fft(void);
+        LIB_EXPORT void ifft(void);
 
     };
 
@@ -190,10 +190,10 @@ namespace tImage {
 
     public:
 
-        DLL_EXPORT Fourier2d(void);
+        LIB_EXPORT Fourier2d(void);
 
         // 必要なメモリを計算
-        DLL_EXPORT t_uint64 PreSetup(
+        LIB_EXPORT t_uint64 PreSetup(
             Matrix<t_float>* _fft_src_real, Matrix<t_float>* _fft_src_imag,
             Matrix<t_float>* _fft_dst_real, Matrix<t_float>* _fft_dst_imag,
             Matrix<t_float>* _ifft_dst_real, Matrix<t_float>* _ifft_dst_imag
@@ -201,21 +201,21 @@ namespace tImage {
         );
         // 変換準備
         // buffer : PreSetupで計算したサイズのメモリアドレス
-        DLL_EXPORT t_err Setup(void* buffer);
+        LIB_EXPORT t_err Setup(void* buffer);
 
-        DLL_EXPORT void fft(void);
-        DLL_EXPORT void ifft(void);
+        LIB_EXPORT void fft(void);
+        LIB_EXPORT void ifft(void);
 
     };
 
     // 1次元FFT
     // Nは2の累乗である必要がある．そのためには，padding4fft()を持ちいる．
     // tmp1, tmp2はdstのサイズと一致させる．
-    DLL_EXPORT void fft1d(t_float* src_real, t_float* src_imag, t_float* dst_real, t_float* dst_imag, t_float* tmp_real, t_float* tmp_imag, t_uint N);
+    LIB_EXPORT void fft1d(t_float* src_real, t_float* src_imag, t_float* dst_real, t_float* dst_imag, t_float* tmp_real, t_float* tmp_imag, t_uint N);
 
     // 1次元IFFT
     // Nは2の累乗である必要がある．そのためには，padding4fft()を持ちいる．
     // tmp1, tmp2はdstのサイズと一致させる．
-    DLL_EXPORT void ifft1d(t_float* src_real, t_float* src_imag, t_float* dst_real, t_float* dst_imag, t_float* tmp_real, t_float* tmp_imag, t_uint N);
+    LIB_EXPORT void ifft1d(t_float* src_real, t_float* src_imag, t_float* dst_real, t_float* dst_imag, t_float* tmp_real, t_float* tmp_imag, t_uint N);
 
 }

@@ -70,7 +70,7 @@ namespace core {
         __cpuid(p, i);
     }
 
-    extern "C" DLL_EXPORT void cpuid_msvc_x64(t_int* p, t_int i);
+    extern "C" LIB_EXPORT void cpuid_msvc_x64(t_int* p, t_int i);
 
     // get cpuidex
     inline void get_cpuidex(t_int* p, t_int i, t_int c) {

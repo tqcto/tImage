@@ -4,28 +4,6 @@
 
 namespace tImage {
 
-	enum {
-
-		t_transformFlag_NONE		= 0L,
-		t_transformFlag_TILE		= 1L,
-		t_transformFlag_MIRROR		= 1L << 1L,
-
-		t_transformFlag_MOVE		= 1L << 2L,
-		t_transformFlag_ROTATION	= 1L << 3L,
-		t_transformFlag_SCALING		= 1L << 4L,
-
-	};
-
-	/*
-	// Bits per channel.
-	typedef struct {
-		t_uint r;
-		t_uint g;
-		t_uint b;
-		t_uint a;
-	}BitsPerChannel;
-	*/
-
 	// Pixel format for Image class.
 	typedef struct {
 		t_uint channels;
@@ -38,11 +16,11 @@ namespace tImage {
 	}PixelFormat;
 
 	class Image;
-	
+
 	/*<******************************************* friend functions *******************************************>*/
 	// swap channels
     // ex: RGB <-> BGR
-	DLL_EXPORT t_err swap(Image* src, Image* dst) noexcept;
+	LIB_EXPORT t_err swap(Image* src, Image* dst) noexcept;
 	/*/<******************************************* friend functions *******************************************>/*/
 
 	class Image {
@@ -83,27 +61,20 @@ namespace tImage {
 		// initialize class
 
 		/* Initialize empty class */
-		DLL_EXPORT Image(void);
+		LIB_EXPORT Image(void);
 		/* Initialize class from allocate function */
-		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
+		LIB_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
 		/* Initialize class from allocate function */
-		DLL_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth);
-		//DLL_EXPORT Image(t_uint width, t_uint height, t_uint channles, BitsPerChannel unpacked_format);
+		LIB_EXPORT Image(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth);
+		//LIB_EXPORT Image(t_uint width, t_uint height, t_uint channles, BitsPerChannel unpacked_format);
 
-		DLL_EXPORT ~Image();
+		LIB_EXPORT ~Image();
 
 		/* Set align. Only powers of 2 can be specified. */
-		inline t_err setAlign(t_uint align) {
-
-            if ((align & (align - 1)) && !(this->data)) return t_err_InvalidArgument;
-            
-            this->_align = align;
-            return t_err_None;
-
-        }
+		LIB_EXPORT t_err setAlign(t_uint align) noexcept;
 
 		/* Input image of other memory*/
-		DLL_EXPORT t_err input(
+		LIB_EXPORT t_err input(
 			t_uchar* src,
 			t_uint width, t_uint height,
 			t_uint channels, core::codec::t_colorType colorType, t_uint depth,
@@ -113,15 +84,15 @@ namespace tImage {
 		t_err allocate(t_uint cols, t_uint rows) = delete;
 
 		/* Allocate memory of image */
-		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
+		LIB_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType);
 		/* Allocate memory of image. depth is byte count. */
-		DLL_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth);
+		LIB_EXPORT t_err allocate(t_uint width, t_uint height, t_uint channels, core::codec::t_colorType colorType, t_uint depth);
 
 		/* Release memory */
-		DLL_EXPORT void release();
+		LIB_EXPORT void release();
 
 		/* Get whether class is empty. If empty then returned true. */
-		DLL_EXPORT t_bool empty() const noexcept;
+		LIB_EXPORT t_bool empty() const noexcept;
 
 		// 書き込み用行ポインタを取得
         inline t_uchar* rowPtr(t_uint row) const noexcept {
@@ -150,7 +121,7 @@ namespace tImage {
             return this->_align;
         }
 		/* Get stride of image */
-		// DLL_EXPORT t_uint64 stride() const noexcept;
+		// LIB_EXPORT t_uint64 stride() const noexcept;
 		/* Get channels of image */
 		inline t_uint channels() const noexcept {
 			return this->format.channels;
@@ -160,27 +131,27 @@ namespace tImage {
 			return this->format.color_type;
 		}
 		/* Get bit depth of image */
-		DLL_EXPORT t_uint depth() const noexcept;
+		LIB_EXPORT t_uint depth() const noexcept;
 		/* Get byte depth of image */
-		DLL_EXPORT t_uint depthByte() const noexcept;
+		LIB_EXPORT t_uint depthByte() const noexcept;
 
 		/* convert color channel */
-		//DLL_EXPORT t_err convertColorType(t_colorType type);
+		//LIB_EXPORT t_err convertColorType(t_colorType type);
 
-		//DLL_EXPORT t_err fill();
+		//LIB_EXPORT t_err fill();
 
-		DLL_EXPORT t_bool operator==(const Image& img) const;
+		LIB_EXPORT t_bool operator==(const Image& img) const;
 		
-		DLL_EXPORT t_uchar& operator()(t_uint x, t_uint y);
-		//DLL_EXPORT t_uchar& operator()(t_uint x, t_uint y, t_uint c);
+		LIB_EXPORT t_uchar& operator()(t_uint x, t_uint y);
+		//LIB_EXPORT t_uchar& operator()(t_uint x, t_uint y, t_uint c);
 
 		friend t_err swap(Image* src, Image* dst) noexcept;
 
 	};
 
-	DLL_EXPORT t_err decodePNG(Image* dst, const char* filepath);
-	DLL_EXPORT t_err encodePNG(Image* src, const char* filepath);
-	DLL_EXPORT t_err decodeJPEG(Image* dst, const char* filepath);
-	DLL_EXPORT t_err encodeJPEG(Image* src, const char* filepath);
+	LIB_EXPORT t_err decodePNG(Image* dst, const char* filepath);
+	LIB_EXPORT t_err encodePNG(Image* src, const char* filepath);
+	LIB_EXPORT t_err decodeJPEG(Image* dst, const char* filepath);
+	LIB_EXPORT t_err encodeJPEG(Image* src, const char* filepath);
 
 }

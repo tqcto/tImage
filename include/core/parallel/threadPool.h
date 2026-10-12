@@ -49,12 +49,12 @@ namespace parallel {
     public:
 
         // auto set cores
-        DLL_EXPORT threadPool(void);
+        LIB_EXPORT threadPool(void);
         // set cores
-        // DLL_EXPORT threadPool(t_uint num_thread);
-        DLL_EXPORT ~threadPool(void);
+        // LIB_EXPORT threadPool(t_uint num_thread);
+        LIB_EXPORT ~threadPool(void);
 
-        DLL_EXPORT void set_thread_num(t_uint num_thread);
+        LIB_EXPORT void set_thread_num(t_uint num_thread);
 
         template<class F, class... Args>
         inline auto enqueue(F&& f, Args&&... args) 
@@ -83,7 +83,7 @@ namespace parallel {
             return res;
 
         }
-        // DLL_EXPORT void enqueue(std::function<void()> task);
+        // LIB_EXPORT void enqueue(std::function<void()> task);
 
         // parallel forに類似したループ関数の実装
         template<typename Func>

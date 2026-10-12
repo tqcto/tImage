@@ -4328,7 +4328,7 @@ m4_if([$1], [CXX], [
       # Although the cygwin gcc ignores -fPIC, still need this for old-style
       # (--disable-auto-import) libraries
       m4_if([$1], [GCJ], [],
-	[_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'])
+	[_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DLIB_EXPORT'])
       case $host_os in
       os2*)
 	_LT_TAGVAR(lt_prog_compiler_static, $1)='$wl-static'
@@ -4402,7 +4402,7 @@ m4_if([$1], [CXX], [
 	# This hack is so that the source file can tell whether it is being
 	# built for inclusion in a dll (and should export symbols for example).
 	m4_if([$1], [GCJ], [],
-	  [_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'])
+	  [_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DLIB_EXPORT'])
 	;;
       dgux*)
 	case $cc_basename in
@@ -4656,7 +4656,7 @@ m4_if([$1], [CXX], [
       # Although the cygwin gcc ignores -fPIC, still need this for old-style
       # (--disable-auto-import) libraries
       m4_if([$1], [GCJ], [],
-	[_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'])
+	[_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DLIB_EXPORT'])
       case $host_os in
       os2*)
 	_LT_TAGVAR(lt_prog_compiler_static, $1)='$wl-static'
@@ -4758,7 +4758,7 @@ m4_if([$1], [CXX], [
       # This hack is so that the source file can tell whether it is being
       # built for inclusion in a dll (and should export symbols for example).
       m4_if([$1], [GCJ], [],
-	[_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'])
+	[_LT_TAGVAR(lt_prog_compiler_pic, $1)='-DLIB_EXPORT'])
       case $host_os in
       os2*)
 	_LT_TAGVAR(lt_prog_compiler_static, $1)='$wl-static'

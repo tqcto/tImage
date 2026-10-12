@@ -106,17 +106,14 @@ namespace tImage {
 
 	}
 
-	/*
-	t_err Image::setAlign(t_uint align) {
+	t_err Image::setAlign(t_uint align) noexcept {
 
-		// 2�ׂ̂��悩����
 		if (align & (align - 1) && !(this->data)) return t_err_InvalidArgument;
 		
 		this->_align = align;
 		return t_err_None;
 
 	}
-	*/
 
 	t_err Image::input(
 		t_uchar* src,

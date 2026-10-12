@@ -321,7 +321,7 @@
  * static library of libpng then link the DLL against that.
  */
 #ifndef PNG_BUILD_DLL
-#  ifdef DLL_EXPORT
+#  ifdef LIB_EXPORT
       /* This is set by libtool when files are compiled for a DLL; libtool
        * always compiles twice, even on systems where it isn't necessary.  Set
        * PNG_BUILD_DLL in case it is necessary:
@@ -359,7 +359,7 @@
  */
 #ifndef PNG_IMPEXP
 #  ifdef PNG_BUILD_DLL
-#     define PNG_IMPEXP PNG_DLL_EXPORT
+#     define PNG_IMPEXP PNG_LIB_EXPORT
 #  else
       /* Not building a DLL, or the DLL doesn't require specific export
        * definitions.
@@ -426,9 +426,9 @@
 
 #include "png.h"
 
-/* pngconf.h does not set PNG_DLL_EXPORT unless it is required, so: */
-#ifndef PNG_DLL_EXPORT
-#  define PNG_DLL_EXPORT
+/* pngconf.h does not set PNG_LIB_EXPORT unless it is required, so: */
+#ifndef PNG_LIB_EXPORT
+#  define PNG_LIB_EXPORT
 #endif
 
 /* This is a global switch to set the compilation for an installed system

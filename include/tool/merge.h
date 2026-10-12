@@ -5,6 +5,6 @@
 
 namespace tImage {
 
-	DLL_EXPORT t_err merge(Image* src_planes, Image* dst);
+	LIB_EXPORT t_err merge(Image* src_planes, Image* dst);
 
 }

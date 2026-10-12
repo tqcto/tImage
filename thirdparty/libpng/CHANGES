@@ -3544,7 +3544,7 @@ Version 1.5.5beta05 [August 17, 2011]
     is removed from the test of whether a DLL is being built (this erroneously
     caused the libpng APIs to be marked as DLL exports in static builds under
     Microsoft Visual Studio).  Almost all of the libpng building configuration
-    is moved from pngconf.h to pngpriv.h, but PNG_DLL_EXPORT remains in
+    is moved from pngconf.h to pngpriv.h, but PNG_LIB_EXPORT remains in
     pngconf.h, though, so that it is colocated with the import definition (it
     is no longer used anywhere in the installed headers).  The VStudio project
     definitions have been cleaned up: "_USRDLL" has been removed from the

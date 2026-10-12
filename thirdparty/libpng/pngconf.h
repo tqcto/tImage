@@ -161,7 +161,7 @@
  * PNG_EXPORT_TYPE(type) A macro that pre or appends PNG_IMPEXP to
  *                       'type', compiler specific.
  *
- * PNG_DLL_EXPORT Set to the magic to use during a libpng build to
+ * PNG_LIB_EXPORT Set to the magic to use during a libpng build to
  *                make a symbol exported from the DLL.  Not used in the
  *                public header files; see pngpriv.h for how it is used
  *                in the libpng build.
@@ -222,7 +222,7 @@
 #     error PNG_USER_PRIVATEBUILD must be defined if PNGAPI is changed
 #  endif
 
-#  define PNG_DLL_EXPORT __declspec(dllexport)
+#  define PNG_LIB_EXPORT __declspec(dllexport)
 #  ifndef PNG_DLL_IMPORT
 #    define PNG_DLL_IMPORT __declspec(dllimport)
 #  endif

@@ -62,13 +62,13 @@ namespace tImage {
 #endif
 */
 
-#ifndef DLL_EXPORT
+#ifndef LIB_EXPORT
 #if defined(_WIN32) && defined(TIMAGE_BUILD_DLL)
-#define DLL_EXPORT __declspec(dllexport)
+#define LIB_EXPORT __declspec(dllexport)
 #elif defined(_WIN32) && defined(TIMAGE_USE_DLL)
-#define DLL_EXPORT __declspec(dllimport)
+#define LIB_EXPORT __declspec(dllimport)
 #else
-#define DLL_EXPORT
+#define LIB_EXPORT
 #endif
 #endif
 

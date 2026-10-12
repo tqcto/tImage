@@ -10,6 +10,6 @@ namespace tImage {
 	dst_planes is array of Image splitted src image channels.
 	dst_planes are sorted in src color order.
 	*/
-	DLL_EXPORT t_err split(Image* src_planes, Image* dst);
+	LIB_EXPORT t_err split(Image* src_planes, Image* dst);
 
 }
