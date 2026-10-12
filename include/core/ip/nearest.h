@@ -3,6 +3,8 @@
 #include "../cpu.h"
 #include "../simd/simd.h"
 
+#include <cmath>
+
 using namespace tImage::core::simd;
 
 namespace tImage {
