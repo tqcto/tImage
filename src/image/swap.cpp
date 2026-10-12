@@ -160,6 +160,7 @@ namespace tImage {
         // simd 256 bit
         if (proc & core::t_simd_set_256bit && check_aligned) {
 
+            printf("simd 256bit\n");
             const t_int loop = src->elementsRow() >> 5;
 
             const core::simd::v_uint8x32 mask(
@@ -269,6 +270,8 @@ namespace tImage {
         } else
         // normal
         {
+
+            printf("normal\n");
 
             threadPool.pfor(0, height, [src, dst, width](t_int y) {
                 

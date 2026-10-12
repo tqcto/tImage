@@ -677,6 +677,20 @@ void test_jpeg(void) {
 
 }
 
+void test_swap(void) {
+
+	Image src;
+	decodePNG(&src, IMG_PATH_PNG);
+
+	Image dst(src.width(), src.height(), src.channels(), src.colorType());
+
+	swap(&src, &dst);
+	swap(&dst, &src);
+
+	encodePNG(&src, "test_swap4.png");
+
+}
+
 void test_threadPool(void) {
 
 	core::parallel::threadPool pool;
@@ -757,6 +771,8 @@ t_int main(void) {
 	printf("AVX512f : %d\n", core::t_CPU_INFO.processor & core::t_cpu_processor_AVX512f);
 
 	test_jpeg();
+
+	test_swap();
 
     Image src, dst;
     decodeJPEG(&src, IMG_PATH_JPG);
