@@ -33,6 +33,23 @@ namespace simd {
 
     };
 
+    struct v_float32x8 {
+        
+        __m256 v;
+
+        explicit inline v_float32x8(void) {} 
+        explicit inline v_float32x8(__m256 v) : v(v) {}
+
+        inline v_float32x8(
+            t_float v0, t_float v1, t_float v2, t_float v3,
+            t_float v4, t_float v5, t_float v6, t_float v7
+        ) : v(_mm256_set_ps(
+                v7,  v6,  v5,  v4,
+                v3,  v2,  v1,  v0
+            )) {}
+
+    };
+
     /*<******************************************* load *******************************************>*/
     // load aligned 8x32 bit integer to 256 bit register
     inline void v256_load_8x32_aligned(t_uchar* src, v_uint8x32& dst) {
@@ -41,6 +58,15 @@ namespace simd {
     // load uchar 8x32 bit integer to 256 bit register
     inline void v256_load_8x32(t_uchar* src, v_uint8x32& dst) {
         dst.v = _mm256_lddqu_si256 (reinterpret_cast<const __m256i*>(src));
+    }
+
+    // load aligned 32x8 bit float to 256 bit register
+    inline void v256_load_32x8_aligned(t_float* src, v_float32x8& dst) {
+        dst.v = _mm256_load_ps(src);
+    }
+    // load uchar 32x8 bit float to 256 bit register
+    inline void v256_load_32x8(t_float* src, v_float32x8& dst) {
+        dst.v = _mm256_loadu_ps(src);
     }
     /*\<******************************************* load *******************************************\>*/
 
@@ -53,6 +79,15 @@ namespace simd {
     inline void v256_store_8x32(v_uint8x32& src, t_uchar* dst) {
         _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst), src.v);
     }
+
+    // store 256 bit register to aligned 32x8 bit float
+    inline void v256_store_32x8_aligned(v_float32x8& src, t_float* dst) {
+        _mm256_store_ps(dst, src.v);
+    }
+    // store 256 bit register to unaligned 32x8 bit float
+    inline void v256_store_32x8(v_float32x8& src, t_float* dst) {
+        _mm256_storeu_ps(dst, src.v);
+    }
     /*\<******************************************* store *******************************************\>*/
 
     /*<******************************************* shuffle *******************************************>*/
@@ -60,7 +95,24 @@ namespace simd {
     inline void v256_shuffle_8x32(v_uint8x32& src, v_uint8x32& dst, const v_uint8x32& mask) {
         dst.v = _mm256_shuffle_epi8(src.v, mask.v);
     }
+
+    // shuffle 256 bit register by mask
+    inline void v256_shuffle_float32x4(v_float32x8& src, v_float32x8& dst, const v_float32x8& mask) {
+        dst.v = _mm256_shuffle_f32x4(src.v, mask.v, _MM_SHUFFLE(3, 2, 1, 0));
+    }
     /*\<******************************************* shuffle *******************************************\>*/
+
+    /*<******************************************* round *******************************************>*/
+    // round 256 bit float register
+    inline void v256_round_float32x8(v_float32x8& src, v_float32x8& dst) {
+        dst.v = _mm256_round_ps(src.v, (_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC));
+    }
+
+    // round 256 bit double register
+    // inline void v256_round_float64x4(v_float64x4& src, v_float64x4& dst) {
+    //     dst.v = _mm256_round_pd(src.v, (_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC));
+    // }
+    /*\<******************************************* round *******************************************\>*/
 
 }
 }
