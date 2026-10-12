@@ -39,6 +39,9 @@ namespace tImage {
 	}PixelFormat;
 
 	class Image;
+	
+	// swap channels
+    // ex: RGB <-> BGR
 	DLL_EXPORT t_err swap(Image* src, Image* dst) noexcept;
 
 	class Image : public Matrix<t_uchar> {

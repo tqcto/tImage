@@ -1,4 +1,4 @@
-#include "../../include/tool/swap.h"
+#include "../../include/image/Image.h"
 #include "../../include/core/cpu.h"
 #include "../../include/core/codec/codec.h"
 // #if defined(TIMAGE_ARCH_X86)
