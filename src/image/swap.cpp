@@ -15,7 +15,7 @@ namespace tImage {
 
     // is mem_align > check_align
     inline t_bool check_big_align(t_uint mem_align, t_uint check_align) {
-        return mem_align & (mem_align - 1) &&  mem_align > check_align;
+        return !(mem_align & (mem_align - 1)) &&  mem_align >= check_align;
     }
 
     inline t_uint swap3_pixel(t_uint c) {
